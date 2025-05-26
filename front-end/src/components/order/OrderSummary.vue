@@ -1,6 +1,6 @@
 <template>
   <!-- 하단 고정 주문 요약 -->
-  <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+  <div class="min-h-screen bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
     <!-- 주문 내역이 있을 때만 펼칠 수 있는 영역 -->
     <div v-if="order.items.length > 0" class="transition-all duration-300" :class="{ 'max-h-64 overflow-y-auto': isExpanded, 'max-h-0 overflow-hidden': !isExpanded }">
       <div class="px-4 py-3 border-b border-gray-100">
