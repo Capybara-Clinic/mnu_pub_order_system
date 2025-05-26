@@ -19,8 +19,8 @@
   <script setup>
   import { ref, onMounted } from 'vue';
   import { useRoute } from 'vue-router';
-  import MenuList from '@/components/MenuList.vue';
-  import OrderSummary from '@/components/OrderSummary.vue';
+  import MenuList from '@/components/order/MenuList.vue';
+  import OrderSummary from '@/components/order/OrderSummary.vue';
   import { fetchMenuAndOrders, getStockSSEUrl } from '@/services/api';
   import { useOrderStore } from '@/store/order';
   import { useSSE } from '@/hooks/useSSE';
