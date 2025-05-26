@@ -1,87 +1,47 @@
 <template>
   <div class="cashier-dashboard min-h-screen bg-gray-100 p-4">
-    <!-- 헤더 (단순화) -->
+    <!-- 헤더 -->
     <header class="mb-6">
       <h1 class="text-2xl font-bold text-gray-800">대시보드</h1>
     </header>
     
     <!-- 테이블 그리드 -->
     <section class="mb-8">
+      <h2 class="text-lg font-bold text-gray-800 mb-4">🍽️ 테이블 현황</h2>
       <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
         <TableCard 
           v-for="table in tables" 
-          :key="table.id"
+          :key="table.table_id"
           :table-data="table"
           @table-clicked="handleTableClick"
-          @status-updated="handleStatusUpdate"
-          @table-cleared="handleTableClear"
+          @table-cleared="handleTableClearNew"
         />
       </div>
     </section>
     
-    <!-- 재고 관리 -->
-    <section class="bg-white rounded-lg p-4 shadow-md mb-4">
-      <h2 class="text-lg font-bold text-gray-800 mb-4">📦 재고 관리</h2>
+    <!-- 관리 버튼들 -->
+    <section class="grid grid-cols-2 gap-4 mb-6">
+      <button 
+        @click="goToInventory"
+        class="bg-blue-500 text-white text-lg font-bold py-4 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
+      >
+        📦 재고 관리
+      </button>
       
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div 
-          v-for="item in inventory" 
-          :key="item.id"
-          class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-          :class="{ 'opacity-50 bg-red-50': !item.is_available }"
-        >
-          <div>
-            <div class="font-medium" :class="{ 'line-through text-gray-500': !item.is_available }">
-              {{ item.name }}
-              <span v-if="!item.is_available" class="text-red-500 text-xs ml-2">품절</span>
-            </div>
-            <div class="text-sm text-gray-600">{{ item.currentStock }}{{ item.unit }}</div>
-          </div>
-          
-          <div class="flex items-center gap-2">
-            <button 
-              @click="decreaseStock(item.id)"
-              :disabled="!item.is_available"
-              class="w-8 h-8 bg-red-500 text-white rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              -
-            </button>
-            <span class="w-8 text-center text-sm">{{ item.currentStock }}</span>
-            <button 
-              @click="increaseStock(item.id)"
-              :disabled="!item.is_available"
-              class="w-8 h-8 bg-green-500 text-white rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              +
-            </button>
-            
-            <!-- 🆕 품절 토글 버튼 -->
-            <button 
-              @click="toggleAvailability(item.id)"
-              class="ml-2 px-3 py-1 text-xs rounded transition-colors"
-              :class="item.is_available ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-green-500 text-white hover:bg-green-600'"
-            >
-              {{ item.is_available ? '품절' : '복구' }}
-            </button>
-          </div>
-        </div>
-      </div>
+      <button 
+        @click="goToOrders"
+        class="bg-green-500 text-white text-lg font-bold py-4 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
+      >
+        📋 주문 관리
+      </button>
     </section>
-    
-    <!-- 전체 주문 관리 버튼 -->
-    <button 
-      @click="goToOrders"
-      class="w-full bg-blue-500 text-white text-lg font-bold py-4 rounded-lg"
-    >
-      전체 주문 관리
-    </button>
   </div>
 </template>
 
 <script>
+import { onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTableStore } from '@/stores/tableStore'
-import { useInventoryStore } from '@/stores/inventoryStore'
 import TableCard from '@/components/TableCard.vue'
 
 export default {
@@ -95,123 +55,190 @@ export default {
     // Store 사용
     const router = useRouter()
     const tableStore = useTableStore()
-    const inventoryStore = useInventoryStore()
     
-    // 직접 store의 computed 사용
-    const mainMenus = inventoryStore.mainMenus
-    const sideMenus = inventoryStore.sideMenus
-    
-    // 디버깅용 로그
-    console.log('=== 재고 디버깅 ===')
-    console.log('전체 재고:', inventoryStore.inventory)
-    console.log('메인 메뉴:', mainMenus)
-    console.log('사이드 메뉴:', sideMenus)
-    console.log('==================')
-    
-    // 재고 부족 여부 체크
-    const isLowStock = (itemId) => {
-      return inventoryStore.isLowStock(itemId)
-    }
-    
-    // 🎯 이벤트 핸들러들 - ALERT 제거하고 라우팅으로 변경!
+    // 🎯 이벤트 핸들러들
     const handleTableClick = (tableId) => {
       console.log(`[Dashboard] 테이블 ${tableId} 클릭됨`)
       
-      const table = tableStore.tables.find(t => t.id === tableId)
-      if (table && table.status === 'empty') {
-        // ✅ ALERT 대신 새 주문 페이지로 이동!
+      const table = tableStore.getTableById(tableId)
+      
+      if (!table.is_occupied) {
+        // ✅ 빈 테이블 → 새 주문 페이지로 이동
         console.log(`[Dashboard] 빈 테이블 ${tableId} - 새 주문 페이지로 이동`)
         router.push(`/order/new/${tableId}`)
       } else {
-        // ✅ 활성 테이블은 상세 페이지로 이동
+        // ✅ 사용 중인 테이블 → 상세 페이지로 이동
         console.log(`[Dashboard] 테이블 ${tableId} - 상세 페이지로 이동`)
         router.push(`/table/${tableId}`)
       }
     }
     
-    const handleStatusUpdate = (tableId) => {
-      console.log(`[Dashboard] 테이블 ${tableId} 상태 업데이트 요청`)
-      tableStore.nextTableStatus(tableId)
-    }
-    
-    const handleTableClear = (tableId) => {
-      console.log(`[Dashboard] 테이블 ${tableId} 초기화 요청`)
-      tableStore.clearTable(tableId)
-    }
-    
-    const increaseStock = (itemId) => {
-      inventoryStore.increaseStock(itemId)
-    }
-    
-    const decreaseStock = (itemId) => {
-      inventoryStore.decreaseStock(itemId)
-    }
-    
-    // 🆕 품절 토글
-    const toggleAvailability = (itemId) => {
-      const item = inventoryStore.inventory.find(i => i.id === itemId)
-      if (item) {
-        const newStatus = !item.is_available
-        const confirmMsg = newStatus ? 
-          `${item.name}을(를) 판매 가능으로 변경하시겠습니까?` : 
-          `${item.name}을(를) 품절 처리하시겠습니까?`
+    // 🔄 새로운 테이블 정리 로직 (상태별 처리)
+    const handleTableClearNew = async (tableId) => {
+      console.log(`[Dashboard] 테이블 ${tableId} 새로운 정리 로직 시작`)
+      
+      try {
+        // 해당 테이블의 모든 주문들 가져오기
+        const tableOrders = Object.values(tableStore.orders).filter(order => order.table_id === tableId)
         
-        if (confirm(confirmMsg)) {
-          // TODO: API 연결
-          // await toggleMenuAvailabilityAPI(itemId, newStatus)
-          
-          item.is_available = newStatus
-          console.log(`${item.name} 판매 상태 변경: ${newStatus ? '판매 가능' : '품절'}`)
+        if (tableOrders.length === 0) {
+          console.log(`테이블 ${tableId}에 주문이 없습니다. 단순 정리`)
+          const success = await tableStore.clearTable(tableId)
+          if (success) {
+            console.log(`✅ 빈 테이블 ${tableId} 정리 완료`)
+          }
+          return
         }
+        
+        // 주문들의 상태별 분류
+        const pendingOrders = tableOrders.filter(order => order.order_status === '결제대기')
+        const confirmedOrders = tableOrders.filter(order => order.order_status === '결제확인')  
+        const completedOrders = tableOrders.filter(order => order.order_status === '완료')
+        const canceledOrders = tableOrders.filter(order => order.order_status === '취소')
+        const otherOrders = tableOrders.filter(order => !['결제대기', '결제확인', '완료', '취소'].includes(order.order_status))
+        
+        console.log(`테이블 ${tableId} 주문 상태 분석:`, {
+          결제대기: pendingOrders.length,
+          결제확인: confirmedOrders.length,
+          완료: completedOrders.length,
+          취소: canceledOrders.length,
+          기타: otherOrders.length
+        })
+        
+        // 확인 메시지 구성
+        let confirmMsg = `🧹 테이블 ${tableId}번을 정리하시겠습니까?\n\n`
+        
+        if (pendingOrders.length > 0) {
+          confirmMsg += `🔸 결제대기 ${pendingOrders.length}개 → DB에서 삭제\n`
+        }
+        if (confirmedOrders.length > 0) {
+          confirmMsg += `🔸 결제확인 ${confirmedOrders.length}개 → 취소 처리\n`
+        }
+        if (completedOrders.length > 0) {
+          confirmMsg += `🔸 완료 ${completedOrders.length}개 → 정상 아웃\n`
+        }
+        if (canceledOrders.length > 0) {
+          confirmMsg += `🔸 취소 ${canceledOrders.length}개 → 이미 처리됨\n`
+        }
+        if (otherOrders.length > 0) {
+          confirmMsg += `🔸 기타 ${otherOrders.length}개 → 취소 처리\n`
+        }
+        
+        const totalAmount = tableOrders.reduce((sum, order) => sum + order.total_amount, 0)
+        confirmMsg += `\n💰 총액: ${totalAmount.toLocaleString()}원\n\n계속하시겠습니까?`
+        
+        if (!confirm(confirmMsg)) {
+          console.log(`테이블 ${tableId} 정리 취소됨`)
+          return
+        }
+        
+        let processedCount = 0
+        let errorCount = 0
+        
+        // 1. 결제대기 주문들 - DB에서 완전 삭제
+        for (const order of pendingOrders) {
+          console.log(`🗑️ 결제대기 주문 ${order.order_id} 삭제 중...`)
+          const success = await tableStore.deleteOrder(order.order_id)
+          if (success) {
+            processedCount++
+            console.log(`✅ 주문 ${order.order_id} 삭제 완료`)
+          } else {
+            errorCount++
+            console.error(`❌ 주문 ${order.order_id} 삭제 실패`)
+          }
+        }
+        
+        // 2. 결제확인 주문들 - 취소 처리 (DB 보존)
+        for (const order of confirmedOrders) {
+          console.log(`❌ 결제확인 주문 ${order.order_id} 취소 처리 중...`)
+          const success = await tableStore.cancelOrder(order.order_id)
+          if (success) {
+            processedCount++
+            console.log(`✅ 주문 ${order.order_id} 취소 완료`)
+          } else {
+            errorCount++
+            console.error(`❌ 주문 ${order.order_id} 취소 실패`)
+          }
+        }
+        
+        // 3. 기타 주문들 - 취소 처리
+        for (const order of otherOrders) {
+          console.log(`❌ 기타 주문 ${order.order_id} 취소 처리 중...`)
+          const success = await tableStore.cancelOrder(order.order_id)
+          if (success) {
+            processedCount++
+            console.log(`✅ 주문 ${order.order_id} 취소 완료`)
+          } else {
+            errorCount++
+            console.error(`❌ 주문 ${order.order_id} 취소 실패`)
+          }
+        }
+        
+        // 4. 최종 테이블 정리
+        console.log(`🧹 테이블 ${tableId} 최종 정리 중...`)
+        const tableSuccess = await tableStore.clearTable(tableId)
+        
+        if (tableSuccess) {
+          console.log(`✅ 테이블 ${tableId} 정리 완료! 처리된 주문: ${processedCount}개, 오류: ${errorCount}개`)
+          if (errorCount === 0) {
+            alert(`테이블 ${tableId}번이 정리되었습니다.`)
+          } else {
+            alert(`테이블 ${tableId}번 정리 완료 (일부 오류 발생: ${errorCount}개)`)
+          }
+        } else {
+          console.error(`❌ 테이블 ${tableId} 최종 정리 실패`)
+          alert('테이블 정리 중 오류가 발생했습니다.')
+        }
+        
+      } catch (error) {
+        console.error(`❌ 테이블 ${tableId} 정리 중 예외 발생:`, error)
+        alert('테이블 정리 중 오류가 발생했습니다.')
       }
     }
     
-    const refreshInventory = () => {
-      console.log('재고 새로고침')
-      // TODO: 나중에 DB에서 최신 재고 데이터 가져오기
-      inventoryStore.loadMenuFromAPI()
+    // 재고 관리 페이지로 이동
+    const goToInventory = () => {
+      router.push('/inventory')
     }
     
     const goToOrders = () => {
       router.push('/orders')
     }
     
-    // 개발용 테스트 함수들
-    const testNextStatus = () => {
-      console.log('[테스트] 테이블 1번 상태 변경 테스트')
-      tableStore.nextTableStatus(1)
-    }
-    
-    const testClearTable = () => {
-      console.log('[테스트] 테이블 2번 초기화 테스트')
-      tableStore.clearTable(2)
-    }
+    // 생명주기
+    onMounted(() => {
+      console.log('🚀 Cashier Dashboard 로드됨')
+      tableStore.initializeStore()
+    })
     
     return {
-      // 데이터
-      tables: tableStore.tables,   // 다시 기본으로
-      mainMenus,
-      sideMenus,
-      lowStockCount: inventoryStore.lowStockCount,
+      // 데이터 (실시간 계산 적용)
+      tables: computed(() => {
+        return tableStore.tables.map(table => {
+          if (!table.current_order) return table
+          
+          // current_order의 total_amount를 실시간 계산
+          const order = tableStore.getOrderById(table.current_order.order_id)
+          if (order) {
+            return {
+              ...table,
+              current_order: {
+                ...table.current_order,
+                total_amount: order.total_amount
+              }
+            }
+          }
+          return table
+        })
+      }),
+      totalRevenue: tableStore.totalRevenue,
+      TABLE_COUNT: tableStore.TABLE_COUNT,
       
-      // 디버그용
-      allInventory: inventoryStore.inventory,
-      inventory: inventoryStore.inventory,
-      rawMainMenus: inventoryStore.getMainMenus(),
-      rawSideMenus: inventoryStore.getSideMenus(),
-      
-      // 메소드
-      isLowStock,
+      // 함수들
       handleTableClick,
-      handleStatusUpdate,
-      handleTableClear,
-      increaseStock,
-      decreaseStock,
-      toggleAvailability,  // 🆕 품절 토글
-      refreshInventory,
-      goToOrders,
-      testNextStatus,
-      testClearTable
+      handleTableClearNew, // 새로운 함수명으로 변경
+      goToInventory,
+      goToOrders
     }
   }
 }

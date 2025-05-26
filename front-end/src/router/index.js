@@ -47,7 +47,14 @@ const routes = [
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     redirect: '/'
-  }
+  },
+
+  {
+  path: '/inventory',
+  name: 'InventoryManagement',
+  component: () => import('@/views/InventoryManagementView.vue')
+}
+
 ]
 
 const router = createRouter({

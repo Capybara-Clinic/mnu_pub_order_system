@@ -1,199 +1,171 @@
 // stores/inventoryStore.js
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { defineStore } from 'pinia'
 
 export const useInventoryStore = defineStore('inventory', () => {
-    // 재고 데이터 (더미)
-    const inventory = ref([
-        // 메인 메뉴
-        { 
-            id: 1, 
-            name: '알리오올리오', 
-            price: 12000, 
-            currentStock: 8, 
-            minStock: 3, 
-            unit: '개',
-            category: 'main',
-            is_available: true  // 🆕 판매 가능 여부
-        },
-        { 
-            id: 2, 
-            name: '감바스', 
-            price: 15000, 
-            currentStock: 5, 
-            minStock: 2, 
-            unit: '개',
-            category: 'main',
-            is_available: true
-        },
-        { 
-            id: 3, 
-            name: '에그인더헬', 
-            price: 8000, 
-            currentStock: 12, 
-            minStock: 5, 
-            unit: '개',
-            category: 'main',
-            is_available: true
-        },
-        { 
-            id: 4, 
-            name: '토마토파스타', 
-            price: 14000, 
-            currentStock: 6, 
-            minStock: 3, 
-            unit: '개',
-            category: 'main',
-            is_available: true
-        },
-        
-        // 사이드 메뉴 (기존)
-        { 
-            id: 5, 
-            name: '콘치즈', 
-            price: 8000, 
-            currentStock: 15, 
-            minStock: 8, 
-            unit: '개',
-            category: 'side',
-            is_available: true
-        },
-        { 
-            id: 6, 
-            name: '소세지구이', 
-            price: 10000, 
-            currentStock: 9, 
-            minStock: 4, 
-            unit: '개',
-            category: 'side',
-            is_available: true
-        },
-        { 
-            id: 7, 
-            name: '나쵸', 
-            price: 12000, 
-            currentStock: 7, 
-            minStock: 3, 
-            unit: '개',
-            category: 'side',
-            is_available: true
-        },
-        
-        // 🍺 음료 메뉴 (새로 추가)
-        { 
-            id: 8, 
-            name: '소주', 
-            price: 5000, 
-            currentStock: 24, 
-            minStock: 10, 
-            unit: '병',
-            category: 'side',
-            is_available: true
-        },
-        { 
-            id: 9, 
-            name: '맥주', 
-            price: 5000, 
-            currentStock: 18, 
-            minStock: 8, 
-            unit: '병',
-            category: 'side',
-            is_available: false  // 🆕 테스트용 품절 상태
-        }
-    ])
-    
-    // Computed 속성들
-    const mainMenus = computed(() => {
-        return inventory.value.filter(item => item.category === 'main')
-    })
-    
-    const sideMenus = computed(() => {
-        return inventory.value.filter(item => item.category === 'side')
-    })
-    
-    const lowStockItems = computed(() => {
-        return inventory.value.filter(item => item.currentStock <= item.minStock)
-    })
-    
-    const lowStockCount = computed(() => {
-        return lowStockItems.value.length
-    })
-    
-    // 메뉴별 재고 부족 체크
-    const isLowStock = (itemId) => {
-        const item = inventory.value.find(item => item.id === itemId)
-        return item && item.currentStock <= item.minStock
+  // 메인 메뉴
+  const mainMenus = ref([
+    {
+      id: 1,
+      name: '알리오올리오',
+      price: 12000,
+      currentStock: 8,
+      unit: '개',
+      is_available: true,
+      category: 'main'
+    },
+    {
+      id: 2,
+      name: '감바스',
+      price: 15000,
+      currentStock: 5,
+      unit: '개',
+      is_available: true,
+      category: 'main'
+    },
+    {
+      id: 3,
+      name: '에그인더헬',
+      price: 8000,
+      currentStock: 12,
+      unit: '개',
+      is_available: true,
+      category: 'main'
+    },
+    {
+      id: 4,
+      name: '토마토파스타',
+      price: 13000,
+      currentStock: 6,
+      unit: '개',
+      is_available: true,
+      category: 'main'
     }
-    
-    // 재고 증가/감소 함수들
-    const increaseStock = (itemId, amount = 1) => {
-        const item = inventory.value.find(item => item.id === itemId)
-        if (item) {
-            item.currentStock += amount
-            console.log(`${item.name} 재고 증가: ${item.currentStock}${item.unit}`)
-        }
+  ])
+
+  // 사이드 메뉴
+  const sideMenus = ref([
+    {
+      id: 5,
+      name: '콘치즈',
+      price: 8000,
+      currentStock: 15,
+      unit: '개',
+      is_available: true,
+      category: 'side'
+    },
+    {
+      id: 6,
+      name: '감자튀김',
+      price: 6000,
+      currentStock: 24,
+      unit: '개',
+      is_available: true,
+      category: 'side'
+    },
+    {
+      id: 7,
+      name: '나쵸',
+      price: 12000,
+      currentStock: 7,
+      unit: '개',
+      is_available: true,
+      category: 'side'
+    },
+    {
+      id: 8,
+      name: '소세지구이',
+      price: 9000,
+      currentStock: 9,
+      unit: '개',
+      is_available: true,
+      category: 'side'
+    },
+    {
+      id: 9,
+      name: '맥주',
+      price: 5000,
+      currentStock: 18,
+      unit: '병',
+      is_available: true,
+      category: 'side'
     }
-    
-    const decreaseStock = (itemId, amount = 1) => {
-        const item = inventory.value.find(item => item.id === itemId)
-        if (item && item.currentStock >= amount) {
-            item.currentStock -= amount
-            console.log(`${item.name} 재고 감소: ${item.currentStock}${item.unit}`)
-        } else if (item) {
-            console.warn(`${item.name} 재고 부족! 현재: ${item.currentStock}${item.unit}`)
-        }
+  ])
+
+  // 전체 인벤토리 (메인 + 사이드)
+  const inventory = ref([...mainMenus.value, ...sideMenus.value])
+
+  // 재고 증가
+  const increaseStock = (itemId) => {
+    const item = inventory.value.find(i => i.id === itemId)
+    if (item) {
+      item.currentStock += 1
+      // 재고가 1 이상이 되면 판매 가능으로 변경
+      if (item.currentStock > 0) {
+        item.is_available = true
+      }
+      console.log(`${item.name} 재고 증가: ${item.currentStock}${item.unit}`)
     }
-    
-    // 특정 메뉴의 재고 조회
-    const getMenuStock = (itemId) => {
-        const item = inventory.value.find(item => item.id === itemId)
-        return item ? item.currentStock : 0
+  }
+
+  // 재고 감소
+  const decreaseStock = (itemId) => {
+    const item = inventory.value.find(i => i.id === itemId)
+    if (item && item.currentStock > 0) {
+      item.currentStock -= 1
+      // 재고가 0이 되면 품절로 변경
+      if (item.currentStock === 0) {
+        item.is_available = false
+      }
+      console.log(`${item.name} 재고 감소: ${item.currentStock}${item.unit}`)
     }
-    
-    // 메뉴명으로 검색
-    const findMenuByName = (menuName) => {
-        return inventory.value.find(item => item.name === menuName)
+  }
+
+  // 품절 상태 토글
+  const toggleAvailability = (itemId) => {
+    const item = inventory.value.find(i => i.id === itemId)
+    if (item) {
+      item.is_available = !item.is_available
+      console.log(`${item.name} 판매 상태 변경: ${item.is_available ? '판매 가능' : '품절'}`)
     }
-    
-    // 카테고리별 조회 함수 (템플릿에서 직접 호출 가능)
-    const getMainMenus = () => {
-        return inventory.value.filter(item => item.category === 'main')
+  }
+
+  // 재고 설정
+  const setStock = (itemId, newStock) => {
+    const item = inventory.value.find(i => i.id === itemId)
+    if (item) {
+      item.currentStock = newStock
+      if (newStock === 0) {
+        item.is_available = false
+      } else if (!item.is_available && newStock > 0) {
+        item.is_available = true
+      }
+      console.log(`${item.name} 재고 설정: ${newStock}${item.unit}`)
     }
+  }
+
+  // ID로 메뉴 찾기
+  const getMenuById = (menuId) => {
+    return inventory.value.find(item => item.id === menuId)
+  }
+
+  // 판매 가능한 메뉴들
+  const getAvailableMenus = () => {
+    return inventory.value.filter(item => item.is_available)
+  }
+
+  return {
+    // 데이터
+    mainMenus,
+    sideMenus,
+    inventory,
     
-    const getSideMenus = () => {
-        return inventory.value.filter(item => item.category === 'side')
-    }
-    
-    // API 연동용 함수 (나중에 구현)
-    const loadMenuFromAPI = async () => {
-        console.log('API에서 메뉴 데이터 로딩... (구현 예정)')
-        // TODO: 실제 API 호출로 대체
-    }
-    
-    const updateMenuToAPI = async (itemId, newStock) => {
-        console.log(`API로 ${itemId}번 메뉴 재고 업데이트: ${newStock} (구현 예정)`)
-        // TODO: 실제 API 호출로 대체
-    }
-    
-    return {
-        // 데이터
-        inventory,
-        
-        // Computed
-        mainMenus,
-        sideMenus,
-        lowStockItems,
-        lowStockCount,
-        
-        // 메소드
-        isLowStock,
-        increaseStock,
-        decreaseStock,
-        getMenuStock,
-        findMenuByName,
-        getMainMenus,
-        getSideMenus,
-        loadMenuFromAPI,
-        updateMenuToAPI
-    }
+    // 함수들
+    increaseStock,
+    decreaseStock,
+    toggleAvailability,
+    setStock,
+    getMenuById,
+    getAvailableMenus
+  }
 })
