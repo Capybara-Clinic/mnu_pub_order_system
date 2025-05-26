@@ -26,9 +26,10 @@
             <label class="text-sm font-medium text-gray-700">필터:</label>
             <select v-model="statusFilter" class="border border-gray-300 rounded px-3 py-1 text-sm">
               <option value="">모든 상태</option>
-              <option value="cooking">조리 중</option>
-              <option value="completed">완료</option>
-              <option value="partial">부분 완료</option>
+              <option value="결제대기">결제대기</option>
+              <option value="결제확인">결제확인</option>
+              <option value="완료">완료</option>
+              <option value="취소">취소</option>
             </select>
           </div>
 
@@ -55,7 +56,7 @@
               <input 
                 v-model="searchQuery"
                 type="text" 
-                placeholder="검색..."
+                placeholder="주문번호, 입금자명 검색..."
                 class="w-full border border-gray-300 rounded px-3 py-1 text-sm pr-8"
               >
               <button class="absolute right-2 top-1/2 transform -translate-y-1/2 text-white bg-blue-500 rounded px-2 py-0.5 text-xs">
@@ -72,30 +73,36 @@
           <table class="w-full">
             <thead class="bg-gray-50">
               <tr>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">주문 ID</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">주문번호</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">테이블</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">시간</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">입금자명</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">주문시간</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">메뉴</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">금액</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">총액</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="order in paginatedOrders" :key="order.fullId" class="hover:bg-gray-50">
-                <!-- 주문 ID -->
+              <tr v-for="order in paginatedOrders" :key="order.order_id" class="hover:bg-gray-50">
+                <!-- 주문번호 -->
                 <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {{ order.id }}
+                  {{ order.order_number }}
                 </td>
                 
                 <!-- 테이블 -->
                 <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ order.tableId }}번
+                  {{ order.table_id }}번
                 </td>
                 
-                <!-- 시간 -->
+                <!-- 입금자명 -->
                 <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ order.orderTime }}
+                  {{ order.depositor_name }}
+                </td>
+                
+                <!-- 주문시간 -->
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ formatTime(order.order_time) }}
                 </td>
                 
                 <!-- 메뉴 -->
@@ -105,18 +112,18 @@
                   </div>
                 </td>
                 
-                <!-- 금액 -->
+                <!-- 총액 -->
                 <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ getOrderTotal(order).toLocaleString() }}원
+                  {{ order.total_amount.toLocaleString() }}원
                 </td>
                 
                 <!-- 상태 -->
                 <td class="px-4 py-4 whitespace-nowrap">
                   <span 
                     class="inline-flex px-2 py-1 text-xs font-medium rounded-full"
-                    :class="getStatusBadgeClass(order.status)"
+                    :class="getStatusBadgeClass(order.order_status)"
                   >
-                    {{ getStatusText(order.status) }}
+                    {{ getStatusText(order.order_status) }}
                   </span>
                 </td>
                 
@@ -124,13 +131,13 @@
                 <td class="px-4 py-4 whitespace-nowrap text-sm">
                   <div class="flex gap-2">
                     <button 
-                      @click="goToOrderDetail(order.tableId, order.id)"
+                      @click="goToOrderDetail(order.table_id, order.order_id)"
                       class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs transition-colors"
                     >
                       수정
                     </button>
                     <button 
-                      @click="handleCancelOrder(order.id, order.tableId)"
+                      @click="handleCancelOrder(order.order_id)"
                       class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs transition-colors"
                     >
                       취소
@@ -141,7 +148,7 @@
               
               <!-- 데이터 없을 때 -->
               <tr v-if="filteredOrders.length === 0">
-                <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                <td colspan="8" class="px-4 py-8 text-center text-gray-500">
                   주문 내역이 없습니다
                 </td>
               </tr>
@@ -149,14 +156,24 @@
           </table>
         </div>
 
-        <!-- 페이지네이션 -->
+        <!-- 페이지네이션 - 균형잡힌 3단 구조 -->
         <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
           <div class="flex items-center justify-between">
+            <!-- 왼쪽: 총 주문 수 -->
             <div class="text-sm text-gray-700">
-              총 {{ filteredOrders.length }}개 주문 중 {{ startIndex + 1 }}-{{ endIndex }}번째
+              총 {{ filteredOrders.length }}개 주문
             </div>
             
+            <!-- 가운데: 페이지 버튼들 -->
             <div class="flex gap-1">
+              <button 
+                v-if="currentPage > 1"
+                @click="currentPage--"
+                class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+              >
+                &lt;
+              </button>
+              
               <button 
                 v-for="page in totalPages" 
                 :key="page"
@@ -170,39 +187,18 @@
               <button 
                 v-if="currentPage < totalPages"
                 @click="currentPage++"
-                class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300"
+                class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
               >
                 &gt;
               </button>
             </div>
+            
+            <!-- 오른쪽: 현재 범위 -->
+            <div class="text-sm text-gray-700">
+              {{ startIndex + 1 }}-{{ endIndex }}번째
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- 새 주문 추가 버튼 -->
-    <button 
-      @click="showAddOrderModal = true"
-      class="fixed bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-full shadow-lg transition-colors flex items-center gap-2"
-    >
-      <span class="text-xl">+</span>
-      <span>새 주문</span>
-    </button>
-
-    <!-- 새 주문 모달 -->
-    <div v-if="showAddOrderModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <h3 class="text-lg font-bold mb-4">새 주문 추가</h3>
-        <div class="text-center py-8">
-          <div class="text-gray-500 mb-4">새 주문 기능은 준비 중입니다</div>
-          <p class="text-sm text-gray-400">실제로는 메뉴 선택 화면이 나타납니다</p>
-        </div>
-        <button 
-          @click="showAddOrderModal = false"
-          class="w-full bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400 transition-colors"
-        >
-          닫기
-        </button>
       </div>
     </div>
   </div>
@@ -228,25 +224,22 @@ export default {
     const searchQuery = ref('')
     const currentPage = ref(1)
     const itemsPerPage = ref(10)
-    const showAddOrderModal = ref(false)
     
     // ===== Computed Properties =====
     
-    // 모든 주문을 하나의 배열로 합치기
+    // 모든 주문을 배열로 변환 (DB 스키마 기반, 실시간 계산)
     const allOrders = computed(() => {
-      const orders = []
+      if (!tableStore.orders) return []
       
-      Object.entries(tableStore.tableOrders).forEach(([tableId, tableOrders]) => {
-        tableOrders.forEach(order => {
-          orders.push({
-            ...order,
-            tableId: parseInt(tableId),
-            fullId: `${tableId}-${order.id}` // 고유 식별자
-          })
-        })
+      return Object.values(tableStore.orders).map(order => {
+        // total_amount를 order_details 기반으로 실시간 계산
+        const calculatedTotal = order.order_details?.reduce((sum, detail) => sum + detail.subtotal, 0) || 0
+        
+        return {
+          ...order,
+          total_amount: calculatedTotal
+        }
       })
-      
-      return orders
     })
     
     // 필터링된 주문들
@@ -255,22 +248,21 @@ export default {
       
       // 상태 필터
       if (statusFilter.value) {
-        filtered = filtered.filter(order => order.status === statusFilter.value)
+        filtered = filtered.filter(order => order.order_status === statusFilter.value)
       }
       
       // 테이블 필터
       if (tableFilter.value) {
-        filtered = filtered.filter(order => order.tableId === parseInt(tableFilter.value))
+        filtered = filtered.filter(order => order.table_id === parseInt(tableFilter.value))
       }
       
-      // 검색
+      // 검색 (주문번호, 입금자명)
       if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase()
         filtered = filtered.filter(order => {
-          const menuText = getOrderMenuText(order).toLowerCase()
-          return menuText.includes(query) || 
-                 order.id.toLowerCase().includes(query) ||
-                 order.tableId.toString().includes(query)
+          return order.order_number.toLowerCase().includes(query) ||
+                 order.depositor_name.toLowerCase().includes(query) ||
+                 order.table_id.toString().includes(query)
         })
       }
       
@@ -278,11 +270,11 @@ export default {
       filtered.sort((a, b) => {
         switch (sortOrder.value) {
           case 'newest':
-            return b.orderTime.localeCompare(a.orderTime)
+            return new Date(b.order_time) - new Date(a.order_time)
           case 'oldest':
-            return a.orderTime.localeCompare(b.orderTime)
+            return new Date(a.order_time) - new Date(b.order_time)
           case 'table':
-            return a.tableId - b.tableId
+            return a.table_id - b.table_id
           default:
             return 0
         }
@@ -303,63 +295,88 @@ export default {
     // ===== Methods =====
     
     const goBack = () => {
-      router.push('/')
+      router.push('/dashboard')
     }
     
+    // 주문 메뉴 텍스트 생성 (order_details 기반)
     const getOrderMenuText = (order) => {
-      if (!order.items || order.items.length === 0) return '메뉴 없음'
+      if (!order.order_details || order.order_details.length === 0) return '메뉴 없음'
       
-      const firstItem = order.items[0]
-      const firstText = `${firstItem.name}(${firstItem.quantity})`
+      const firstItem = order.order_details[0]
+      const firstText = `${firstItem.menu_name}(${firstItem.quantity}개)`
       
-      if (order.items.length === 1) {
+      if (order.order_details.length === 1) {
         return firstText
       } else {
-        return `${firstText} 외 ${order.items.length - 1}개`
+        return `${firstText} 외 ${order.order_details.length - 1}개`
       }
     }
     
-    const getOrderTotal = (order) => {
-      return order.items.reduce((sum, item) => sum + item.price, 0)
+    // 시간 포맷팅
+    const formatTime = (timeString) => {
+      try {
+        const date = new Date(timeString)
+        return date.toLocaleString('ko-KR', {
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      } catch (error) {
+        return timeString
+      }
     }
     
+    // 상태 텍스트 (DB ENUM 기반)
     const getStatusText = (status) => {
       switch (status) {
-        case 'cooking': return '조리 중'
-        case 'completed': return '완료'
-        case 'partial': return '부분 완료'
-        case 'payment': return '결제완료'
-        default: return '대기'
+        case '결제대기': return '결제 대기'
+        case '결제확인': return '결제 확인'
+        case '완료': return '완료'
+        case '취소': return '취소'
+        default: return status
       }
     }
     
+    // 상태별 배지 색상
     const getStatusBadgeClass = (status) => {
       switch (status) {
-        case 'cooking': return 'bg-red-100 text-red-800'
-        case 'completed': return 'bg-green-100 text-green-800'
-        case 'partial': return 'bg-orange-100 text-orange-800'
-        case 'payment': return 'bg-blue-100 text-blue-800'
+        case '결제대기': return 'bg-orange-100 text-orange-800'
+        case '결제확인': return 'bg-blue-100 text-blue-800'
+        case '완료': return 'bg-green-100 text-green-800'
+        case '취소': return 'bg-red-100 text-red-800'
         default: return 'bg-gray-100 text-gray-800'
       }
     }
     
+    // 주문 상세로 이동
     const goToOrderDetail = (tableId, orderId) => {
       router.push(`/order/edit/${tableId}/${orderId}`)
     }
     
-    // 🎯 주문 취소 함수 - 확실하게 정의!
-    const handleCancelOrder = (orderId, tableId) => {
-      const confirmMsg = `주문 ${orderId}를 취소하시겠습니까?\n(취소된 주문은 복구할 수 없습니다)`
+    // 주문 취소
+    const handleCancelOrder = async (orderId) => {
+      const order = tableStore.getOrderById(orderId)
+      if (!order) {
+        alert('주문을 찾을 수 없습니다.')
+        return
+      }
+      
+      const confirmMsg = `주문 ${order.order_number}을(를) 취소하시겠습니까?\n입금자: ${order.depositor_name}\n금액: ${order.total_amount.toLocaleString()}원\n\n취소된 주문은 복구할 수 없습니다.`
       
       if (confirm(confirmMsg)) {
-        // TODO: API 연결
-        // await cancelOrderAPI(orderId)
-        
-        console.log(`주문 ${orderId} 취소 요청`)
-        alert('주문이 취소되었습니다.')
-        
-        // 임시: 로컬에서 주문 제거
-        tableStore.deleteOrder(tableId, orderId)
+        try {
+          const success = await tableStore.cancelOrder(orderId)
+          if (success) {
+            console.log(`✅ 주문 ${orderId} 취소 완료`)
+            alert('주문이 취소되었습니다.')
+          } else {
+            alert('주문 취소에 실패했습니다.')
+          }
+        } catch (error) {
+          console.error('주문 취소 중 오류:', error)
+          alert('주문 취소 중 오류가 발생했습니다.')
+        }
       }
     }
     
@@ -371,7 +388,6 @@ export default {
       sortOrder,
       searchQuery,
       currentPage,
-      showAddOrderModal,
       
       // Computed
       allOrders,
@@ -384,11 +400,11 @@ export default {
       // Methods
       goBack,
       getOrderMenuText,
-      getOrderTotal,
+      formatTime,
       getStatusText,
       getStatusBadgeClass,
       goToOrderDetail,
-      handleCancelOrder  // 🎯 확실히 포함!
+      handleCancelOrder
     }
   }
 }
