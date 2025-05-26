@@ -1,38 +1,38 @@
 <template>
   <div 
     class="table-card rounded-lg p-4 shadow-md cursor-pointer min-h-[120px] flex flex-col justify-between"
-    :class="statusClass"
+    :class="cardClass"
     @click="handleClick"
   >
     <!-- 테이블 정보 -->
     <div class="text-white">
-      <h3 class="font-bold text-lg mb-1">{{ tableData.name }}</h3>
-      <p v-if="tableData.amount > 0" class="text-sm mb-1">
-        가격: {{ tableData.amount.toLocaleString() }}원
-      </p>
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-medium">{{ tableData.statusText }}</span>
-        <span v-if="tableData.status === 'ready'" class="text-sm">✓</span>
-        <span v-if="tableData.orderTime" class="text-xs">⏰ {{ tableData.orderTime }}</span>
+      <h3 class="font-bold text-lg mb-1">테이블 {{ tableData.table_id }}번</h3>
+      
+      <!-- 빈 테이블 -->
+      <div v-if="!tableData.is_occupied" class="text-center text-gray-200 py-2">
+        <span class="text-sm">빈 테이블</span>
+        <div class="text-xs mt-1">클릭하여 새 주문</div>
+      </div>
+      
+      <!-- 사용 중인 테이블 -->
+      <div v-else-if="tableData.current_order" class="space-y-1">
+        <div class="flex justify-between items-center">
+          <span class="text-xs font-medium">{{ getStatusText(tableData.current_order.order_status) }}</span>
+          <span class="text-xs">{{ formatTime(tableData.current_order.order_time) }}</span>
+        </div>
+        
+        <div class="text-sm font-medium">
+          {{ tableData.current_order.total_amount.toLocaleString() }}원
+        </div>
       </div>
     </div>
     
-    <!-- 빈 테이블 표시 -->
-    <div v-if="tableData.status === 'empty'" class="text-center text-gray-500 py-2">
-      <span class="text-sm">빈 테이블</span>
-    </div>
-    
-    <!-- 버튼들 -->
-    <div v-if="tableData.status !== 'empty'" class="mt-3 flex gap-2" @click.stop>
+    <!-- 하단 버튼 영역 (아웃 버튼만) -->
+    <div v-if="tableData.is_occupied" class="mt-3 flex gap-2">
+      <div class="flex-1"></div> <!-- 공간 확보용 -->
       <button 
-        @click="nextStatus" 
-        class="flex-1 bg-white bg-opacity-20 hover:bg-opacity-30 text-white text-xs py-1 rounded transition-colors"
-      >
-        ▶
-      </button>
-      <button 
-        @click="clearTable"
-        class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white text-xs px-3 py-1 rounded transition-colors"
+        @click.stop="clearTable"
+        class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white text-xs px-3 py-1 rounded transition-colors z-10 relative"
       >
         아웃
       </button>
@@ -53,42 +53,91 @@ export default {
     }
   },
   
-  emits: ['table-clicked', 'status-updated', 'table-cleared'],
+  emits: ['table-clicked', 'table-cleared'],
   
   setup(props, { emit }) {
-    // 상태별 색상 (부분완료 추가)
-    const statusClass = computed(() => {
-      switch (props.tableData.status) {
-        case 'ready': return 'bg-green-500'      // 준비 완료
-        case 'payment': return 'bg-blue-500'     // 결제 완료
-        case 'cooking': return 'bg-red-500'      // 준비 중
-        case 'partial': return 'bg-orange-500'   // 부분 완료
-        case 'empty': return 'bg-gray-300'       // 빈 테이블
-        default: return 'bg-gray-300'
+    // 카드 색상 (주문 상태별)
+    const cardClass = computed(() => {
+      if (!props.tableData.is_occupied) {
+        return 'bg-gray-300'  // 빈 테이블
+      }
+      
+      const status = props.tableData.current_order?.order_status
+      switch (status) {
+        case '결제대기': return 'bg-orange-500'    // 주황 - 결제 대기
+        case '결제확인': return 'bg-blue-500'      // 파랑 - 결제 확인
+        case '완료': return 'bg-green-500'         // 초록 - 완료
+        case '취소': return 'bg-red-500'           // 빨강 - 취소
+        default: return 'bg-gray-500'              // 기본
       }
     })
     
+    // 상태 텍스트 변환
+    const getStatusText = (status) => {
+      switch (status) {
+        case '결제대기': return '결제 대기'
+        case '결제확인': return '결제 확인'
+        case '완료': return '서빙 완료'
+        case '취소': return '취소됨'
+        default: return status
+      }
+    }
+    
+    // 시간 포맷팅
+    const formatTime = (timeString) => {
+      try {
+        const date = new Date(timeString)
+        return date.toLocaleTimeString('ko-KR', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        })
+      } catch (error) {
+        return timeString
+      }
+    }
+    
+    // 테이블 클릭 (상세 페이지로 이동)
     const handleClick = () => {
-      console.log(`${props.tableData.name} 클릭됨`)
-      emit('table-clicked', props.tableData.id)
+      console.log(`테이블 ${props.tableData.table_id}번 클릭됨`)
+      emit('table-clicked', props.tableData.table_id)
     }
     
-    const nextStatus = () => {
-      console.log(`[TableCard] ${props.tableData.name} 상태 변경 요청`)
-      emit('status-updated', props.tableData.id)
-    }
-    
-    const clearTable = () => {
-      console.log(`[TableCard] ${props.tableData.name} 초기화 요청`)
-      if (confirm(`${props.tableData.name}을(를) 정말 초기화하시겠습니까?`)) {
-        emit('table-cleared', props.tableData.id)
+    // 테이블 정리 (아웃)
+    const clearTable = (event) => {
+      console.log(`🎯 테이블 ${props.tableData.table_id}번 아웃 버튼 클릭됨`)
+      
+      // 이벤트 전파 방지
+      if (event) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+      
+      const tableName = `테이블 ${props.tableData.table_id}번`
+      const orderInfo = props.tableData.current_order
+      
+      let confirmMsg = `${tableName}을 정리하시겠습니까?`
+      if (orderInfo) {
+        confirmMsg += `\n\n주문 정보:`
+        confirmMsg += `\n- 주문번호: ${orderInfo.order_number}`
+        confirmMsg += `\n- 입금자: ${orderInfo.depositor_name}`
+        confirmMsg += `\n- 금액: ${orderInfo.total_amount.toLocaleString()}원`
+        confirmMsg += `\n- 상태: ${getStatusText(orderInfo.order_status)}`
+        confirmMsg += `\n\n정리하면 빈 테이블이 됩니다.`
+      }
+      
+      if (confirm(confirmMsg)) {
+        console.log(`✅ 테이블 ${props.tableData.table_id}번 정리 확인됨 - 이벤트 발신`)
+        emit('table-cleared', props.tableData.table_id)
+      } else {
+        console.log(`❌ 테이블 ${props.tableData.table_id}번 정리 취소됨`)
       }
     }
     
     return {
-      statusClass,
+      cardClass,
+      getStatusText,
+      formatTime,
       handleClick,
-      nextStatus,
       clearTable
     }
   }
@@ -106,37 +155,39 @@ export default {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* 상태별 기본 스타일 추가 */
+/* 상태별 그라데이션 */
 .table-card.bg-gray-300 {
   background: linear-gradient(135deg, #e5e7eb, #d1d5db);
+  color: #374151;
 }
 
-.table-card.bg-green-500 {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
+.table-card.bg-orange-500 {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
 }
 
 .table-card.bg-blue-500 {
   background: linear-gradient(135deg, #3b82f6, #2563eb);
 }
 
+.table-card.bg-green-500 {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
 .table-card.bg-red-500 {
   background: linear-gradient(135deg, #ef4444, #dc2626);
 }
 
-.table-card.bg-orange-500 {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  position: relative;
+.table-card.bg-gray-500 {
+  background: linear-gradient(135deg, #6b7280, #4b5563);
 }
 
-/* 부분 완료 특별 효과 */
-.table-card.bg-orange-500::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #22c55e 0%, #22c55e 60%, #f59e0b 60%, #f59e0b 100%);
-  border-radius: 0.5rem 0.5rem 0 0;
+/* 아웃 버튼 스타일 강화 */
+button {
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+
+button:active {
+  transform: scale(0.95);
 }
 </style>
