@@ -5,11 +5,11 @@
     @click="handleClick"
   >
     <!-- 테이블 정보 -->
-    <div class="text-white">
+    <div :class="tableData.is_occupied ? 'text-white' : 'text-gray-800'">
       <h3 class="font-bold text-lg mb-1">테이블 {{ tableData.table_id }}번</h3>
       
       <!-- 빈 테이블 -->
-      <div v-if="!tableData.is_occupied" class="text-center text-gray-200 py-2">
+      <div v-if="!tableData.is_occupied" class="text-center text-gray-700 py-2">
         <span class="text-sm">빈 테이블</span>
         <div class="text-xs mt-1">클릭하여 새 주문</div>
       </div>

@@ -1,40 +1,42 @@
 <template>
-  <div class="cashier-dashboard min-h-screen bg-gray-100 p-4">
-    <!-- 헤더 -->
-    <header class="mb-6">
-      <h1 class="text-2xl font-bold text-gray-800">대시보드</h1>
-    </header>
-    
-    <!-- 테이블 그리드 -->
-    <section class="mb-8">
-      <h2 class="text-lg font-bold text-gray-800 mb-4">🍽️ 테이블 현황</h2>
-      <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <TableCard 
-          v-for="table in tables" 
-          :key="table.table_id"
-          :table-data="table"
-          @table-clicked="handleTableClick"
-          @table-cleared="handleTableClearNew"
-        />
-      </div>
-    </section>
-    
-    <!-- 관리 버튼들 -->
-    <section class="grid grid-cols-2 gap-4 mb-6">
-      <button 
-        @click="goToInventory"
-        class="bg-blue-500 text-white text-lg font-bold py-4 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
-      >
-        📦 재고 관리
-      </button>
+  <div class="cashier-dashboard min-h-screen bg-gray-100 flex flex-col justify-center py-8 px-6">
+    <div class="max-w-7xl mx-auto w-full">
+      <!-- 헤더 -->
+      <header class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800 text-center">대시보드</h1>
+      </header>
       
-      <button 
-        @click="goToOrders"
-        class="bg-green-500 text-white text-lg font-bold py-4 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
-      >
-        📋 주문 관리
-      </button>
-    </section>
+      <!-- 테이블 그리드 -->
+      <section class="mb-8">
+        <h2 class="text-xl font-bold text-gray-800 mb-6">🍽️ 테이블 현황</h2>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-6">
+          <TableCard 
+            v-for="table in tables" 
+            :key="table.table_id"
+            :table-data="table"
+            @table-clicked="handleTableClick"
+            @table-cleared="handleTableClearNew"
+          />
+        </div>
+      </section>
+      
+      <!-- 관리 버튼들 -->
+      <section class="grid grid-cols-2 gap-6">
+        <button 
+          @click="goToInventory"
+          class="bg-blue-500 text-white text-xl font-bold py-6 rounded-xl hover:bg-blue-600 transition-colors flex items-center justify-center gap-3 shadow-lg"
+        >
+          📦 재고 관리
+        </button>
+        
+        <button 
+          @click="goToOrders"
+          class="bg-green-500 text-white text-xl font-bold py-6 rounded-xl hover:bg-green-600 transition-colors flex items-center justify-center gap-3 shadow-lg"
+        >
+          📋 주문 관리
+        </button>
+      </section>
+    </div>
   </div>
 </template>
 
@@ -245,8 +247,19 @@ export default {
 </script>
 
 <style scoped>
-.cashier-dashboard {
-  max-width: 1200px;
-  margin: 0 auto;
+/* 호버 효과 강화 */
+button:hover {
+  transform: translateY(-2px);
+}
+
+/* 반응형 조정 */
+@media (max-width: 768px) {
+  .grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+  
+  .md\:grid-cols-5 {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 </style>

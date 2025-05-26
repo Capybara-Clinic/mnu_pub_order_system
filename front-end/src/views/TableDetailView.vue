@@ -110,10 +110,11 @@
           </div>
           
           <!-- 주문별 액션 버튼 -->
-          <div class="p-4 bg-gray-50 flex gap-2">
+          <div class="p-4 bg-gray-50 grid grid-cols-3 gap-2">
             <button 
               @click="goToOrderEdit(order.order_id)"
-              class="flex-1 bg-gray-500 hover:bg-gray-600 text-white text-xs font-medium py-2 px-3 rounded transition-colors"
+              class="bg-gray-500 hover:bg-gray-600 text-white text-xs font-medium py-2 px-3 rounded transition-colors"
+              :class="(order.order_status === '완료' || order.order_status === '취소') ? 'col-span-3' : 'col-span-2'"
             >
               수정
             </button>
@@ -132,17 +133,17 @@
 
     <!-- 하단 고정 버튼 -->
     <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
-      <div class="max-w-7xl mx-auto flex gap-3">
-        <!-- 새 주문 추가 -->
+      <div class="max-w-7xl mx-auto grid grid-cols-3 gap-3">
+        <!-- 새 주문 추가 (2/3 크기) -->
         <button 
           @click="goToNewOrder"
-          class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+          class="col-span-2 bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
         >
           <span class="text-xl">+</span>
           <span>새 주문</span>
         </button>
         
-        <!-- 아웃 (테이블 정리) -->
+        <!-- 아웃 (1/3 크기) -->
         <button 
           @click="clearTable"
           class="bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-6 rounded-lg transition-colors"
@@ -594,12 +595,12 @@ export default {
     grid-template-columns: 1fr;
   }
   
-  .fixed .flex {
-    flex-direction: column;
+  .fixed .grid {
+    grid-template-columns: 1fr;
   }
   
-  .fixed .flex > * {
-    flex: none;
+  .fixed .grid > * {
+    grid-column: span 1;
   }
 }
 
