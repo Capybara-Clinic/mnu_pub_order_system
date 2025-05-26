@@ -44,6 +44,21 @@
       </div>
     </div>
 
+    <!-- 입금자명 입력 -->
+    <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+      <label class="block text-sm font-medium text-gray-700 mb-2">입금자명</label>
+      <input 
+        v-model="depositorName"
+        type="text" 
+        placeholder="입금자명을 입력하세요"
+        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        :disabled="!isNewOrder && orderStatus === '완료'"
+      >
+      <div v-if="!isNewOrder && orderStatus === '완료'" class="text-xs text-gray-500 mt-1">
+        완료된 주문의 입금자명은 수정할 수 없습니다.
+      </div>
+    </div>
+
     <!-- 메뉴 목록 -->
     <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
       <table class="w-full">
@@ -123,20 +138,34 @@
         <!-- 상태 토글 -->
         <div class="flex items-center gap-4">
           <span class="text-sm font-medium text-gray-700">상태:</span>
-          <div class="flex gap-2">
+          <div class="flex gap-2 flex-wrap">
             <button 
-              @click="orderStatus = 'cooking'"
+              @click="orderStatus = '결제대기'"
               class="px-3 py-1 rounded text-sm font-medium transition-colors"
-              :class="orderStatus === 'cooking' ? 'bg-red-500 text-white' : 'bg-red-100 text-red-600'"
+              :class="orderStatus === '결제대기' ? 'bg-orange-500 text-white' : 'bg-orange-100 text-orange-600'"
             >
-              준비 중
+              결제대기
             </button>
             <button 
-              @click="orderStatus = 'completed'"
+              @click="orderStatus = '결제확인'"
               class="px-3 py-1 rounded text-sm font-medium transition-colors"
-              :class="orderStatus === 'completed' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-600'"
+              :class="orderStatus === '결제확인' ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-600'"
+            >
+              결제확인
+            </button>
+            <button 
+              @click="orderStatus = '완료'"
+              class="px-3 py-1 rounded text-sm font-medium transition-colors"
+              :class="orderStatus === '완료' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-600'"
             >
               완료
+            </button>
+            <button 
+              @click="orderStatus = '취소'"
+              class="px-3 py-1 rounded text-sm font-medium transition-colors"
+              :class="orderStatus === '취소' ? 'bg-red-500 text-white' : 'bg-red-100 text-red-600'"
+            >
+              취소
             </button>
           </div>
         </div>
@@ -167,9 +196,10 @@
       
       <button 
         @click="saveOrder"
-        class="bg-green-500 text-white font-bold py-4 px-6 rounded-lg hover:bg-green-600 transition-colors"
+        :disabled="isSaving"
+        class="bg-green-500 text-white font-bold py-4 px-6 rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
       >
-        완료
+        {{ isSaving ? '저장 중...' : '완료' }}
       </button>
     </div>
 
@@ -194,7 +224,7 @@
                 <span v-if="!menu.is_available" class="text-red-500 text-xs ml-2">품절</span>
               </div>
               <div class="text-sm text-gray-600">{{ menu.price.toLocaleString() }}원</div>
-              <div class="text-xs text-gray-500">재고: {{ menu.currentStock }}{{ menu.unit }}</div>
+              <div class="text-xs text-gray-500">재고: {{ menu.is_available ? menu.currentStock : 0 }}{{ menu.unit }}</div>
             </div>
           </div>
         </div>
@@ -215,7 +245,7 @@
                 <span v-if="!menu.is_available" class="text-red-500 text-xs ml-2">품절</span>
               </div>
               <div class="text-sm text-gray-600">{{ menu.price.toLocaleString() }}원</div>
-              <div class="text-xs text-gray-500">재고: {{ menu.currentStock }}{{ menu.unit }}</div>
+              <div class="text-xs text-gray-500">재고: {{ menu.is_available ? menu.currentStock : 0 }}{{ menu.unit }}</div>
             </div>
           </div>
         </div>
@@ -252,10 +282,12 @@ export default {
     // ===== Reactive State =====
     const selectedTableId = ref('')
     const orderItems = ref([])
-    const orderStatus = ref('cooking')
+    const orderStatus = ref('결제대기')
     const showMenuModal = ref(false)
     const orderNumber = ref('')
     const orderDateTime = ref('')
+    const depositorName = ref('')
+    const isSaving = ref(false)
     
     // ===== Computed Properties =====
     
@@ -277,7 +309,6 @@ export default {
     
     const initializeOrder = () => {
       const tableId = route.params.tableId
-      const orderId = route.params.orderId
       
       if (isNewOrder.value) {
         // 새 주문 생성
@@ -285,20 +316,28 @@ export default {
         orderNumber.value = `ORD-${Date.now()}`
         orderDateTime.value = new Date().toLocaleString('ko-KR')
         orderItems.value = []
-        orderStatus.value = 'cooking'
+        orderStatus.value = '결제대기'
+        depositorName.value = ''
         
         console.log('새 주문 생성 모드')
       } else {
         // 기존 주문 수정
-        const orders = tableStore.getTableOrders(parseInt(tableId))
-        const order = orders.find(o => o.id === orderId)
+        const order = tableStore.getOrderById(parseInt(route.params.orderId))
         
         if (order) {
-          selectedTableId.value = tableId
-          orderNumber.value = order.id
-          orderDateTime.value = order.orderTime
-          orderItems.value = [...order.items] // 깊은 복사
-          orderStatus.value = order.status
+          selectedTableId.value = order.table_id.toString()
+          orderNumber.value = order.order_number
+          orderDateTime.value = new Date(order.order_time).toLocaleString('ko-KR')
+          depositorName.value = order.depositor_name
+          orderItems.value = order.order_details.map(detail => ({
+            id: detail.menu_id,
+            tempId: detail.order_detail_id,
+            name: detail.menu_name,
+            price: detail.unit_price,
+            quantity: detail.quantity,
+            completed: detail.is_served
+          }))
+          orderStatus.value = order.order_status
           
           console.log('기존 주문 수정 모드:', order)
         } else {
@@ -310,7 +349,7 @@ export default {
     }
     
     const addMenuItem = (menu) => {
-      // 🆕 품절 메뉴 체크
+      // 품절 메뉴 체크
       if (!menu.is_available) {
         alert(`${menu.name}은(는) 현재 품절된 메뉴입니다.`)
         return
@@ -326,7 +365,7 @@ export default {
         // 새 메뉴 추가
         orderItems.value.push({
           id: menu.id,
-          tempId: Date.now(), // 임시 ID
+          tempId: Date.now(),
           name: menu.name,
           price: menu.price,
           quantity: 1,
@@ -356,7 +395,7 @@ export default {
       }
     }
     
-    const saveOrder = () => {
+    const saveOrder = async () => {
       if (!selectedTableId.value) {
         alert('테이블을 선택해주세요.')
         return
@@ -366,56 +405,123 @@ export default {
         alert('최소 하나의 메뉴를 추가해주세요.')
         return
       }
-      
-      const orderData = {
-        id: orderNumber.value,
-        orderTime: orderDateTime.value,
-        status: orderStatus.value,
-        items: orderItems.value.map(item => ({
-          id: item.id,
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price * item.quantity,
-          completed: item.completed || false
-        }))
+
+      if (!depositorName.value.trim()) {
+        alert('입금자명을 입력해주세요.')
+        return
       }
       
-      if (isNewOrder.value) {
-        // 새 주문 저장
-        tableStore.addNewOrder(parseInt(selectedTableId.value), orderData.items)
-        console.log('새 주문 저장:', orderData)
-        alert('새 주문이 추가되었습니다.')
-      } else {
-        // 기존 주문 업데이트
-        console.log('주문 업데이트:', orderData)
-        alert('주문이 수정되었습니다.')
-        // TODO: tableStore에 updateOrder 함수 추가 필요
-      }
+      isSaving.value = true
       
-      goBack()
+      try {
+        if (isNewOrder.value) {
+          // 새 주문 저장
+          const orderDetails = orderItems.value.map(item => ({
+            menu_id: item.id,
+            menu_name: item.name,
+            quantity: item.quantity,
+            unit_price: item.price,
+            subtotal: item.price * item.quantity,
+            is_served: false
+          }))
+          
+          console.log('주문 저장 시도:', {
+            tableId: parseInt(selectedTableId.value),
+            depositorName: depositorName.value,
+            orderDetails
+          })
+          
+          const newOrderId = await tableStore.addNewOrder(
+            parseInt(selectedTableId.value), 
+            depositorName.value, 
+            orderDetails
+          )
+          
+          if (newOrderId) {
+            console.log('새 주문 저장 성공:', newOrderId)
+            alert('새 주문이 추가되었습니다.')
+            router.push('/dashboard')
+          } else {
+            alert('주문 저장에 실패했습니다.')
+          }
+        } else {
+          // 기존 주문 수정
+          const orderDetails = orderItems.value.map(item => ({
+            menu_id: item.id,
+            menu_name: item.name,
+            quantity: item.quantity,
+            unit_price: item.price,
+            subtotal: item.price * item.quantity,
+            is_served: item.completed || false
+          }))
+          
+          console.log('주문 수정 시도:', {
+            orderId: route.params.orderId,
+            depositorName: depositorName.value,
+            orderDetails,
+            orderStatus: orderStatus.value
+          })
+          
+          const success = await tableStore.updateOrder(
+            parseInt(route.params.orderId),
+            depositorName.value,
+            orderDetails,
+            orderStatus.value
+          )
+          
+          if (success) {
+            console.log('주문 수정 성공')
+            alert('주문이 수정되었습니다.')
+            router.push('/dashboard')
+          } else {
+            alert('주문 수정에 실패했습니다.')
+          }
+        }
+      } catch (error) {
+        console.error('주문 저장 중 오류:', error)
+        alert('주문 저장 중 오류가 발생했습니다.')
+      } finally {
+        isSaving.value = false
+      }
     }
     
-    const cancelOrder = () => {
+    const cancelOrder = async () => {
       if (isNewOrder.value) {
         if (confirm('주문 작성을 취소하시겠습니까?')) {
           goBack()
         }
       } else {
-        if (confirm('이 주문을 완전히 삭제하시겠습니까?')) {
-          // TODO: tableStore에서 주문 삭제 기능 추가
-          console.log('주문 삭제:', orderNumber.value)
-          alert('주문이 삭제되었습니다.')
-          goBack()
+        const order = tableStore.getOrderById(parseInt(route.params.orderId))
+        if (!order) {
+          alert('주문을 찾을 수 없습니다.')
+          return
+        }
+        
+        const confirmMsg = `주문 ${order.order_number}을(를) 취소하시겠습니까?\n\n주문 정보:\n- 입금자: ${order.depositor_name}\n- 금액: ${order.total_amount.toLocaleString()}원\n- 상태: ${order.order_status}\n\n취소된 주문은 복구할 수 없습니다.`
+        
+        if (confirm(confirmMsg)) {
+          try {
+            const success = await tableStore.cancelOrder(parseInt(route.params.orderId))
+            if (success) {
+              console.log('주문 취소 성공')
+              alert('주문이 취소되었습니다.')
+              router.push('/dashboard')
+            } else {
+              alert('주문 취소에 실패했습니다.')
+            }
+          } catch (error) {
+            console.error('주문 취소 중 오류:', error)
+            alert('주문 취소 중 오류가 발생했습니다.')
+          }
         }
       }
     }
     
     const goBack = () => {
-      // 이전 페이지로 돌아가기 (히스토리 기반)
       if (window.history.length > 1) {
         router.go(-1)
       } else {
-        router.push('/')
+        router.push('/dashboard')
       }
     }
     
@@ -433,6 +539,8 @@ export default {
       showMenuModal,
       orderNumber,
       orderDateTime,
+      depositorName,
+      isSaving,
       
       // Computed
       isNewOrder,
@@ -494,6 +602,16 @@ tr:hover {
   
   th, td {
     padding: 8px 12px;
+  }
+  
+  /* 상태 버튼들을 세로로 배치 */
+  .flex-wrap {
+    flex-direction: column;
+  }
+  
+  .flex-wrap button {
+    width: 100%;
+    margin-bottom: 4px;
   }
 }
 </style>
