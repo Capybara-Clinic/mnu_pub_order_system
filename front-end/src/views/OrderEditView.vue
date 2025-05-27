@@ -356,9 +356,15 @@ export default {
     }
     
     const addMenuItem = (menu) => {
-      // 품절 메뉴 체크
+      // 🚨 품절 메뉴 체크
       if (!menu.is_available) {
-        alert(`${menu.name}은(는) 현재 품절된 메뉴입니다.`)
+        alert(`🚨 ${menu.name}은(는) 현재 품절된 메뉴입니다!`)
+        return
+      }
+
+      // 🚨 재고 부족 체크 (현재 재고가 0개)
+      if (menu.currentStock <= 0) {
+        alert(`🚨 ${menu.name} 재고가 부족합니다! (현재 재고: 0${menu.unit})`)
         return
       }
       
@@ -366,8 +372,17 @@ export default {
       const existingIndex = orderItems.value.findIndex(item => item.name === menu.name)
       
       if (existingIndex !== -1) {
-        // 기존 메뉴가 있으면 수량 증가
-        orderItems.value[existingIndex].quantity += 1
+        // 🚨 기존 메뉴 수량 증가 시 재고 한도 체크
+        const currentOrderQuantity = orderItems.value[existingIndex].quantity
+        const newQuantity = currentOrderQuantity + 1
+        
+        if (newQuantity > menu.currentStock) {
+          alert(`🚨 재고 초과! ${menu.name} 최대 주문 가능: ${menu.currentStock}${menu.unit} (현재 주문: ${currentOrderQuantity}${menu.unit})`)
+          return
+        }
+        
+        orderItems.value[existingIndex].quantity = newQuantity
+        console.log(`✅ ${menu.name} 수량 증가: ${newQuantity}${menu.unit} (재고: ${menu.currentStock}${menu.unit})`)
       } else {
         // 새 메뉴 추가
         orderItems.value.push({
@@ -376,16 +391,31 @@ export default {
           name: menu.name,
           price: menu.price,
           quantity: 1,
-          completed: false
+          completed: false,
+          unit: menu.unit, // 단위 정보 추가
+          maxStock: menu.currentStock // 최대 재고 정보 추가
         })
+        console.log(`✅ ${menu.name} 추가됨 (재고: ${menu.currentStock}${menu.unit})`)
       }
       
       showMenuModal.value = false
-      console.log(`${menu.name} 추가됨`)
     }
     
     const increaseQuantity = (index) => {
-      orderItems.value[index].quantity += 1
+      const item = orderItems.value[index]
+      const newQuantity = item.quantity + 1
+      
+      // 🚨 재고 한도 체크
+      const currentMenu = [...mainMenus.value, ...sideMenus.value].find(menu => menu.name === item.name)
+      const maxStock = currentMenu?.currentStock || item.maxStock || 0
+      
+      if (newQuantity > maxStock) {
+        alert(`🚨 재고 초과! ${item.name} 최대 주문 가능: ${maxStock}${item.unit || '개'}`)
+        return
+      }
+      
+      orderItems.value[index].quantity = newQuantity
+      console.log(`✅ ${item.name} 수량 증가: ${newQuantity}${item.unit || '개'} (재고: ${maxStock}${item.unit || '개'})`)
     }
     
     const decreaseQuantity = (index) => {
@@ -398,8 +428,40 @@ export default {
       const itemName = orderItems.value[index].name
       if (confirm(`${itemName}을(를) 삭제하시겠습니까?`)) {
         orderItems.value.splice(index, 1)
-        console.log(`${itemName} 삭제됨`)
+        console.log(`🗑️ ${itemName} 삭제됨`)
       }
+    }
+    
+    // 🚨 최종 재고 검증 함수
+    const validateFinalStock = () => {
+      console.log('🔍 최종 재고 검증 시작...')
+      
+      for (const item of orderItems.value) {
+        // 최신 재고 정보 가져오기
+        const currentMenu = [...mainMenus.value, ...sideMenus.value].find(menu => menu.name === item.name)
+        
+        if (!currentMenu) {
+          alert(`❌ 메뉴를 찾을 수 없습니다: ${item.name}`)
+          return false
+        }
+        
+        // 품절 체크
+        if (!currentMenu.is_available) {
+          alert(`🚨 주문 실패! ${item.name}이(가) 품절되었습니다.`)
+          return false
+        }
+        
+        // 재고 부족 체크
+        if (item.quantity > currentMenu.currentStock) {
+          alert(`🚨 주문 실패! ${item.name} 재고 부족\n요청: ${item.quantity}${item.unit || '개'}\n현재 재고: ${currentMenu.currentStock}${currentMenu.unit}`)
+          return false
+        }
+        
+        console.log(`✅ ${item.name} 재고 검증 통과: ${item.quantity}/${currentMenu.currentStock}${currentMenu.unit}`)
+      }
+      
+      console.log('✅ 모든 메뉴 재고 검증 통과!')
+      return true
     }
     
     const saveOrder = async () => {
@@ -416,6 +478,11 @@ export default {
       if (!depositorName.value.trim()) {
         alert('입금자명을 입력해주세요.')
         return
+      }
+      
+      // 🚨 최종 재고 검증
+      if (!validateFinalStock()) {
+        return // 재고 검증 실패 시 저장 중단
       }
       
       isSaving.value = true
@@ -436,7 +503,7 @@ export default {
           const currentTable = tableStore.getTableById(parseInt(selectedTableId.value))
           const currentSessionId = currentTable?.current_session_id || null
           
-          console.log('주문 저장 시도:', {
+          console.log('📝 주문 저장 시도:', {
             tableId: parseInt(selectedTableId.value),
             depositorName: depositorName.value,
             orderDetails,
@@ -452,11 +519,23 @@ export default {
           )
           
           if (newOrderId) {
-            console.log('새 주문 저장 성공:', newOrderId)
-            alert('새 주문이 추가되었습니다.')
+            // 🎯 주문 성공 시 재고 차감 (실제 서비스에서는 서버에서 처리)
+            for (const item of orderItems.value) {
+              const menuId = item.id
+              const quantity = item.quantity
+              
+              // 재고에서 차감 (inventoryStore에 함수가 있다고 가정)
+              if (inventoryStore.decreaseStock) {
+                inventoryStore.decreaseStock(menuId, quantity)
+                console.log(`📦 재고 차감: ${item.name} -${quantity}${item.unit || '개'}`)
+              }
+            }
+            
+            console.log('✅ 새 주문 저장 성공:', newOrderId)
+            alert('✅ 새 주문이 추가되었습니다!')
             router.push('/dashboard')
           } else {
-            alert('주문 저장에 실패했습니다.')
+            alert('❌ 주문 저장에 실패했습니다.')
           }
         } else {
           // 기존 주문 수정
@@ -469,7 +548,7 @@ export default {
             is_served: item.completed || false
           }))
           
-          console.log('주문 수정 시도:', {
+          console.log('✏️ 주문 수정 시도:', {
             orderId: route.params.orderId,
             depositorName: depositorName.value,
             orderDetails,
@@ -484,16 +563,16 @@ export default {
           )
           
           if (success) {
-            console.log('주문 수정 성공')
-            alert('주문이 수정되었습니다.')
+            console.log('✅ 주문 수정 성공')
+            alert('✅ 주문이 수정되었습니다!')
             router.push('/dashboard')
           } else {
-            alert('주문 수정에 실패했습니다.')
+            alert('❌ 주문 수정에 실패했습니다.')
           }
         }
       } catch (error) {
-        console.error('주문 저장 중 오류:', error)
-        alert('주문 저장 중 오류가 발생했습니다.')
+        console.error('❌ 주문 저장 중 오류:', error)
+        alert('❌ 주문 저장 중 오류가 발생했습니다.')
       } finally {
         isSaving.value = false
       }
