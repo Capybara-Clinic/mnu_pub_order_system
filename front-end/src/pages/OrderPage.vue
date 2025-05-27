@@ -23,21 +23,16 @@
         </button>
       </div>
 
-      <!-- 카테고리 필터 -->
+      <!-- 카테고리 앵커 -->
       <div class="flex gap-2 overflow-x-auto pb-1">
-        <button
+        <a
           v-for="category in categories"
           :key="category.category_id"
-          :class="[
-            'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors',
-            selectedCategory === category.category_name
-              ? 'bg-orange-500 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          ]"
-          @click="selectedCategory = category.category_name"
+          :href="`#category-${category.category_id}`"
+          class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors bg-gray-100 text-gray-700 hover:bg-gray-200"
         >
           {{ category.category_name }}
-        </button>
+        </a>
       </div>
     </div>
 
@@ -46,7 +41,7 @@
       <div
         v-for="category in categories"
         :key="category.category_id"
-        v-show="selectedCategory === category.category_name"
+        :id="`category-${category.category_id}`"
       >
         <h2 class="text-md font-semibold text-gray-800 mb-2">{{ category.category_name }}</h2>
         <MenuList :menus="filteredMenus(category.menus)" />
@@ -69,7 +64,6 @@ import { useSSE } from '@/hooks/useSSE';
 
 const categories = ref([]);
 const searchQuery = ref('');
-const selectedCategory = ref('');
 const route = useRoute();
 const orderStore = useOrderStore();
 const tableId = Number(route.params.tableId || 1);
@@ -78,7 +72,6 @@ onMounted(async () => {
   orderStore.setTableId(tableId);
   const data = await fetchMenuAndOrders(tableId);
   categories.value = data.categories;
-  selectedCategory.value = data.categories[0]?.category_name || '';
 });
 
 // 필터링 함수 정의

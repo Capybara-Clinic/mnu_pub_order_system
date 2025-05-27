@@ -6,17 +6,15 @@
         <p class="text-sm text-gray-600 leading-relaxed">{{ menu.description }}</p>
       </div>
       
-      <!-- 메뉴 이미지 자리 (현재는 회색 박스) -->
-      <!-- <div class="w-16 h-16 bg-gray-200 rounded-lg ml-3 flex-shrink-0"></div> -->
-      <!-- 메뉴 이미지 (16x16 크기 유지, 모서리 둥글게, 잘림 방지) -->
-      <div class="w-16 h-16 rounded-lg ml-3 flex-shrink-0 overflow-hidden">
-        <!-- 이미지 경로에 맞게 바인딩 -->
-        <img
-          :src="getImageUrl(menu.menu_name)"
-          alt="메뉴 이미지"
-          class="w-full h-full object-cover"
-        />
-      </div>
+    <!-- 메뉴 이미지 (반응형 크기, 둥근 모서리, 이미지 커버) -->
+    <div class="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-lg ml-3 flex-shrink-0 overflow-hidden">
+      <img
+        :src="getImageUrl(menu.menu_name)"
+        alt="메뉴 이미지"
+        class="w-full h-full object-cover"
+      />
+    </div>
+
     </div>
 
     <div class="flex justify-between items-center mt-3">
