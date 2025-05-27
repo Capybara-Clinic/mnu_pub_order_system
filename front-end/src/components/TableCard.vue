@@ -14,6 +14,12 @@
         <div class="text-xs mt-1">클릭하여 새 주문</div>
       </div>
       
+      <!-- 빈 세션 (주문이 모두 취소된 상태) -->
+      <div v-else-if="tableData.current_order?.order_status === '빈세션'" class="text-center py-2">
+        <span class="text-xs font-medium">빈 세션</span>
+        <div class="text-xs mt-1 opacity-90">주문 추가 또는 아웃</div>
+      </div>
+      
       <!-- 사용 중인 테이블 -->
       <div v-else-if="tableData.current_order" class="space-y-1">
         <div class="flex justify-between items-center">
@@ -68,6 +74,7 @@ export default {
         case '결제확인': return 'bg-blue-500'      // 파랑 - 결제 확인
         case '완료': return 'bg-green-500'         // 초록 - 완료
         case '취소': return 'bg-red-500'           // 빨강 - 취소
+        case '빈세션': return 'bg-purple-500'     // 보라 - 빈 세션
         default: return 'bg-gray-500'              // 기본
       }
     })
@@ -79,6 +86,7 @@ export default {
         case '결제확인': return '결제 확인'
         case '완료': return '서빙 완료'
         case '취소': return '취소됨'
+        case '빈세션': return '빈 세션'
         default: return status
       }
     }
@@ -102,7 +110,7 @@ export default {
       emit('table-clicked', props.tableData.table_id)
     }
     
-    // 테이블 정리 (아웃)
+    // 테이블 정리 (아웃) - 확인창 제거!
     const clearTable = (event) => {
       console.log(`🎯 테이블 ${props.tableData.table_id}번 아웃 버튼 클릭됨`)
       
@@ -112,25 +120,9 @@ export default {
         event.stopPropagation()
       }
       
-      const tableName = `테이블 ${props.tableData.table_id}번`
-      const orderInfo = props.tableData.current_order
-      
-      let confirmMsg = `${tableName}을 정리하시겠습니까?`
-      if (orderInfo) {
-        confirmMsg += `\n\n주문 정보:`
-        confirmMsg += `\n- 주문번호: ${orderInfo.order_number}`
-        confirmMsg += `\n- 입금자: ${orderInfo.depositor_name}`
-        confirmMsg += `\n- 금액: ${orderInfo.total_amount.toLocaleString()}원`
-        confirmMsg += `\n- 상태: ${getStatusText(orderInfo.order_status)}`
-        confirmMsg += `\n\n정리하면 빈 테이블이 됩니다.`
-      }
-      
-      if (confirm(confirmMsg)) {
-        console.log(`✅ 테이블 ${props.tableData.table_id}번 정리 확인됨 - 이벤트 발신`)
-        emit('table-cleared', props.tableData.table_id)
-      } else {
-        console.log(`❌ 테이블 ${props.tableData.table_id}번 정리 취소됨`)
-      }
+      // 확인창 없이 바로 이벤트 발신
+      console.log(`✅ 테이블 ${props.tableData.table_id}번 아웃 이벤트 발신`)
+      emit('table-cleared', props.tableData.table_id)
     }
     
     return {
@@ -175,6 +167,10 @@ export default {
 
 .table-card.bg-red-500 {
   background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.table-card.bg-purple-500 {
+  background: linear-gradient(135deg, #a855f7, #9333ea);
 }
 
 .table-card.bg-gray-500 {

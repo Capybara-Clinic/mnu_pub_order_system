@@ -23,7 +23,7 @@
         <div class="flex flex-wrap gap-4 items-center">
           <!-- 상태 필터 -->
           <div class="flex items-center gap-2">
-            <label class="text-sm font-medium text-gray-700">필터:</label>
+            <label class="text-sm font-medium text-gray-700">상태:</label>
             <select v-model="statusFilter" class="border border-gray-300 rounded px-3 py-1 text-sm">
               <option value="">모든 상태</option>
               <option value="결제대기">결제대기</option>
@@ -137,6 +137,7 @@
                       수정
                     </button>
                     <button 
+                      v-if="order.order_status !== '취소' && order.order_status !== '완료'"
                       @click="handleCancelOrder(order.order_id)"
                       class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs transition-colors"
                     >
@@ -156,7 +157,7 @@
           </table>
         </div>
 
-        <!-- 페이지네이션 - 균형잡힌 3단 구조 -->
+        <!-- 페이지네이션 -->
         <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
           <div class="flex items-center justify-between">
             <!-- 왼쪽: 총 주문 수 -->
@@ -217,6 +218,9 @@ export default {
     const router = useRouter()
     const tableStore = useTableStore()
     
+    // 페이지 제목 설정
+    document.title = '전체 주문 관리 - 레스토랑 관리'
+    
     // ===== Reactive State =====
     const statusFilter = ref('')
     const tableFilter = ref('')
@@ -227,7 +231,7 @@ export default {
     
     // ===== Computed Properties =====
     
-    // 모든 주문을 배열로 변환 (DB 스키마 기반, 실시간 계산)
+    // 모든 주문을 배열로 변환 (세션 정보 포함, 실시간 계산)
     const allOrders = computed(() => {
       if (!tableStore.orders) return []
       

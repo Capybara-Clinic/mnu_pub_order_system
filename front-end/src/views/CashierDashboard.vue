@@ -58,6 +58,9 @@ export default {
     const router = useRouter()
     const tableStore = useTableStore()
     
+    // 페이지 제목 설정
+    document.title = '대시보드 - POS 시스템'
+    
     // 🎯 이벤트 핸들러들
     const handleTableClick = (tableId) => {
       console.log(`[Dashboard] 테이블 ${tableId} 클릭됨`)
@@ -75,31 +78,53 @@ export default {
       }
     }
     
-    // 🔄 새로운 테이블 정리 로직 (상태별 처리)
+    // 🔄 개선된 세션 기반 테이블 정리 로직 (단일 확인창)
     const handleTableClearNew = async (tableId) => {
-      console.log(`[Dashboard] 테이블 ${tableId} 새로운 정리 로직 시작`)
+      console.log(`[Dashboard] 테이블 ${tableId} 세션 기반 정리 시작`)
       
       try {
-        // 해당 테이블의 모든 주문들 가져오기
-        const tableOrders = Object.values(tableStore.orders).filter(order => order.table_id === tableId)
+        const table = tableStore.getTableById(tableId)
+        if (!table) return
         
-        if (tableOrders.length === 0) {
-          console.log(`테이블 ${tableId}에 주문이 없습니다. 단순 정리`)
-          const success = await tableStore.clearTable(tableId)
-          if (success) {
-            console.log(`✅ 빈 테이블 ${tableId} 정리 완료`)
-          }
+        // 현재 세션 정보 가져오기
+        const currentSession = tableStore.getCurrentSession(tableId)
+        if (!currentSession) {
+          console.log(`테이블 ${tableId}에 활성 세션이 없습니다. 직접 정리`)
+          // 직접 테이블 정리
+          table.is_occupied = false
+          table.current_session_id = null
+          table.current_order = null
+          console.log(`✅ 빈 테이블 ${tableId} 정리 완료`)
           return
         }
         
-        // 주문들의 상태별 분류
-        const pendingOrders = tableOrders.filter(order => order.order_status === '결제대기')
-        const confirmedOrders = tableOrders.filter(order => order.order_status === '결제확인')  
-        const completedOrders = tableOrders.filter(order => order.order_status === '완료')
-        const canceledOrders = tableOrders.filter(order => order.order_status === '취소')
-        const otherOrders = tableOrders.filter(order => !['결제대기', '결제확인', '완료', '취소'].includes(order.order_status))
+        // 현재 세션의 주문들만 가져오기
+        const sessionOrders = tableStore.getOrdersBySession(currentSession.session_id)
         
-        console.log(`테이블 ${tableId} 주문 상태 분석:`, {
+        if (sessionOrders.length === 0) {
+          console.log(`세션 ${currentSession.session_id}에 주문이 없습니다. 직접 세션 종료`)
+          // 직접 세션 종료 및 테이블 정리
+          const session = tableStore.sessions[currentSession.session_id]
+          if (session) {
+            session.is_active = false
+            session.end_time = new Date().toISOString()
+          }
+          table.is_occupied = false
+          table.current_session_id = null
+          table.current_order = null
+          console.log(`✅ 빈 세션 테이블 ${tableId} 정리 완료`)
+          return
+        }
+        
+        // 주문들의 상태별 분류 (현재 세션만)
+        const pendingOrders = sessionOrders.filter(order => order.order_status === '결제대기')
+        const confirmedOrders = sessionOrders.filter(order => order.order_status === '결제확인')  
+        const completedOrders = sessionOrders.filter(order => order.order_status === '완료')
+        const canceledOrders = sessionOrders.filter(order => order.order_status === '취소')
+        const otherOrders = sessionOrders.filter(order => !['결제대기', '결제확인', '완료', '취소'].includes(order.order_status))
+        
+        console.log(`테이블 ${tableId} 현재 세션 주문 분석:`, {
+          세션ID: currentSession.session_id,
           결제대기: pendingOrders.length,
           결제확인: confirmedOrders.length,
           완료: completedOrders.length,
@@ -107,94 +132,100 @@ export default {
           기타: otherOrders.length
         })
         
-        // 확인 메시지 구성
-        let confirmMsg = `🧹 테이블 ${tableId}번을 정리하시겠습니까?\n\n`
-        
-        if (pendingOrders.length > 0) {
-          confirmMsg += `🔸 결제대기 ${pendingOrders.length}개 → DB에서 삭제\n`
-        }
-        if (confirmedOrders.length > 0) {
-          confirmMsg += `🔸 결제확인 ${confirmedOrders.length}개 → 취소 처리\n`
-        }
-        if (completedOrders.length > 0) {
-          confirmMsg += `🔸 완료 ${completedOrders.length}개 → 정상 아웃\n`
-        }
-        if (canceledOrders.length > 0) {
-          confirmMsg += `🔸 취소 ${canceledOrders.length}개 → 이미 처리됨\n`
-        }
-        if (otherOrders.length > 0) {
-          confirmMsg += `🔸 기타 ${otherOrders.length}개 → 취소 처리\n`
-        }
-        
-        const totalAmount = tableOrders.reduce((sum, order) => sum + order.total_amount, 0)
-        confirmMsg += `\n💰 총액: ${totalAmount.toLocaleString()}원\n\n계속하시겠습니까?`
-        
-        if (!confirm(confirmMsg)) {
-          console.log(`테이블 ${tableId} 정리 취소됨`)
+        // 📝 초간단 확인 메시지
+        if (!confirm(`정말로 테이블 ${tableId}번을 아웃하시겠습니까?`)) {
+          console.log(`테이블 ${tableId} 아웃 취소됨`)
           return
         }
+        
+        // 🚀 확인 후 직접 처리 (Store 함수 우회)
+        console.log(`🔄 테이블 ${tableId} 직접 처리 시작...`)
         
         let processedCount = 0
         let errorCount = 0
         
-        // 1. 결제대기 주문들 - DB에서 완전 삭제
+        // 1. 결제대기 주문들 - 직접 삭제
         for (const order of pendingOrders) {
           console.log(`🗑️ 결제대기 주문 ${order.order_id} 삭제 중...`)
-          const success = await tableStore.deleteOrder(order.order_id)
-          if (success) {
+          try {
+            delete tableStore.orders[order.order_id]
+            delete tableStore.payments[order.order_id]
             processedCount++
             console.log(`✅ 주문 ${order.order_id} 삭제 완료`)
-          } else {
+          } catch (error) {
             errorCount++
-            console.error(`❌ 주문 ${order.order_id} 삭제 실패`)
+            console.error(`❌ 주문 ${order.order_id} 삭제 실패:`, error)
           }
         }
         
-        // 2. 결제확인 주문들 - 취소 처리 (DB 보존)
+        // 2. 결제확인 주문들 - 직접 취소 처리
         for (const order of confirmedOrders) {
           console.log(`❌ 결제확인 주문 ${order.order_id} 취소 처리 중...`)
-          const success = await tableStore.cancelOrder(order.order_id)
-          if (success) {
+          try {
+            const orderData = tableStore.orders[order.order_id]
+            if (orderData) {
+              orderData.order_status = '취소'
+            }
             processedCount++
             console.log(`✅ 주문 ${order.order_id} 취소 완료`)
-          } else {
+          } catch (error) {
             errorCount++
-            console.error(`❌ 주문 ${order.order_id} 취소 실패`)
+            console.error(`❌ 주문 ${order.order_id} 취소 실패:`, error)
           }
         }
         
-        // 3. 기타 주문들 - 취소 처리
+        // 3. 기타 주문들 - 직접 취소 처리
         for (const order of otherOrders) {
           console.log(`❌ 기타 주문 ${order.order_id} 취소 처리 중...`)
-          const success = await tableStore.cancelOrder(order.order_id)
-          if (success) {
+          try {
+            const orderData = tableStore.orders[order.order_id]
+            if (orderData) {
+              orderData.order_status = '취소'
+            }
             processedCount++
             console.log(`✅ 주문 ${order.order_id} 취소 완료`)
-          } else {
+          } catch (error) {
             errorCount++
-            console.error(`❌ 주문 ${order.order_id} 취소 실패`)
+            console.error(`❌ 주문 ${order.order_id} 취소 실패:`, error)
           }
         }
         
-        // 4. 최종 테이블 정리
-        console.log(`🧹 테이블 ${tableId} 최종 정리 중...`)
-        const tableSuccess = await tableStore.clearTable(tableId)
-        
-        if (tableSuccess) {
-          console.log(`✅ 테이블 ${tableId} 정리 완료! 처리된 주문: ${processedCount}개, 오류: ${errorCount}개`)
-          if (errorCount === 0) {
-            alert(`테이블 ${tableId}번이 정리되었습니다.`)
-          } else {
-            alert(`테이블 ${tableId}번 정리 완료 (일부 오류 발생: ${errorCount}개)`)
+        // 4. 세션 직접 종료 및 테이블 정리
+        console.log(`🧹 테이블 ${tableId} 세션 직접 종료 중...`)
+        try {
+          // 세션 종료
+          const session = tableStore.sessions[currentSession.session_id]
+          if (session) {
+            session.is_active = false
+            session.end_time = new Date().toISOString()
           }
-        } else {
-          console.error(`❌ 테이블 ${tableId} 최종 정리 실패`)
-          alert('테이블 정리 중 오류가 발생했습니다.')
+          
+          // 테이블 정리
+          table.is_occupied = false
+          table.current_session_id = null
+          table.current_order = null
+          
+          
+          console.log(`✅ 테이블 ${tableId} 직접 정리 완료`)
+          
+        } catch (error) {
+          console.error(`❌ 테이블 ${tableId} 직접 정리 실패:`, error)
+          errorCount++
         }
+        
+        // 🎉 완료 알림 (간단하게)
+        console.log(`✅ 테이블 ${tableId} 정리 완료! 세션 종료됨`)
+        console.log(`📊 처리 결과: 성공 ${processedCount}개, 오류 ${errorCount}개`)
+        
+        // 간단한 완료 메시지 (성공 시에는 알림 없음)
+        if (errorCount > 0) {
+          alert(`⚠️ 테이블 ${tableId}번 정리 완료\n(일부 오류: ${errorCount}개)`)
+        }
+        // 성공적으로 처리된 경우에는 알림 없음 (콘솔에만 기록)
         
       } catch (error) {
         console.error(`❌ 테이블 ${tableId} 정리 중 예외 발생:`, error)
-        alert('테이블 정리 중 오류가 발생했습니다.')
+        alert('❌ 테이블 정리 중 오류가 발생했습니다.')
       }
     }
     
@@ -214,31 +245,63 @@ export default {
     })
     
     return {
-      // 데이터 (실시간 계산 적용)
+      // 데이터 (실시간 계산 적용 + 세션 필터링)
       tables: computed(() => {
         return tableStore.tables.map(table => {
-          if (!table.current_order) return table
+          if (!table.current_order || !table.current_session_id) return table
           
-          // current_order의 total_amount를 실시간 계산
-          const order = tableStore.getOrderById(table.current_order.order_id)
-          if (order) {
+          // 현재 세션의 유효한 주문들만 필터링 (취소된 주문 제외)
+          const sessionOrders = Object.values(tableStore.orders).filter(order => 
+            order.table_id === table.table_id && 
+            order.session_id === table.current_session_id &&
+            order.order_status !== '취소'  // 취소된 주문 제외
+          )
+          
+          if (sessionOrders.length === 0) {
+            // 세션이 있지만 유효한 주문이 없으면 "빈 세션" 상태로 표시
+            // (여전히 사용 중인 테이블이지만 주문이 없는 상태)
             return {
               ...table,
+              is_occupied: true,  // 세션이 활성화되어 있으므로 사용 중
               current_order: {
-                ...table.current_order,
-                total_amount: order.total_amount
+                order_id: null,
+                session_id: table.current_session_id,
+                order_status: '빈세션',
+                total_amount: 0,
+                order_time: new Date().toISOString(),
+                depositor_name: '빈 세션',
+                order_number: '세션대기'
               }
             }
           }
-          return table
+          
+          // 세션의 총액 계산 (실시간)
+          const sessionTotal = sessionOrders.reduce((sum, order) => {
+            const calculatedTotal = order.order_details?.reduce((detailSum, detail) => detailSum + detail.subtotal, 0) || 0
+            return sum + calculatedTotal
+          }, 0)
+          
+          // 세션의 첫 번째 유효한 주문 정보 사용 (대표 정보)
+          const firstValidOrder = sessionOrders.sort((a, b) => new Date(a.order_time) - new Date(b.order_time))[0]
+          
+          return {
+            ...table,
+            current_order: {
+              ...table.current_order,
+              total_amount: sessionTotal,
+              depositor_name: firstValidOrder ? firstValidOrder.depositor_name : table.current_order.depositor_name,
+              order_time: firstValidOrder ? firstValidOrder.order_time : table.current_order.order_time
+            }
+          }
         })
       }),
       totalRevenue: tableStore.totalRevenue,
+      occupiedTableCount: tableStore.occupiedTableCount,
       TABLE_COUNT: tableStore.TABLE_COUNT,
       
       // 함수들
       handleTableClick,
-      handleTableClearNew, // 새로운 함수명으로 변경
+      handleTableClearNew,
       goToInventory,
       goToOrders
     }

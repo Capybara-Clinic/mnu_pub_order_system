@@ -18,10 +18,16 @@
     <!-- 주문 정보 카드 -->
     <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
       <div class="grid grid-cols-3 gap-4 text-center">
-        <!-- 주문번호 -->
-        <div class="bg-gray-100 rounded-lg p-3">
+        <!-- 주문번호 (새 주문일 때는 표시하지 않음) -->
+        <div v-if="!isNewOrder" class="bg-gray-100 rounded-lg p-3">
           <div class="text-sm text-gray-600 mb-1">주문번호</div>
           <div class="font-bold text-gray-800">{{ orderNumber }}</div>
+        </div>
+        
+        <!-- 새 주문일 때는 상태 표시 -->
+        <div v-else class="bg-blue-100 rounded-lg p-3">
+          <div class="text-sm text-gray-600 mb-1">상태</div>
+          <div class="font-bold text-blue-800">새 주문 작성중</div>
         </div>
         
         <!-- 테이블 -->
@@ -36,9 +42,9 @@
           </div>
         </div>
         
-        <!-- 주문 접수 시간 -->
+        <!-- 주문 접수 시간 (새 주문일 때는 현재 시간) -->
         <div class="bg-green-100 rounded-lg p-3">
-          <div class="text-sm text-gray-600 mb-1">주문 접수 시간</div>
+          <div class="text-sm text-gray-600 mb-1">{{ isNewOrder ? '작성 시간' : '주문 접수 시간' }}</div>
           <div class="font-bold text-green-800">{{ orderDateTime }}</div>
         </div>
       </div>
@@ -132,8 +138,8 @@
       + 새 메뉴 추가
     </button>
 
-    <!-- 상태 및 총액 -->
-    <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+    <!-- 상태 및 총액 (기존 주문 수정일 때만 표시) -->
+    <div v-if="!isNewOrder" class="bg-white rounded-lg shadow-sm p-4 mb-6">
       <div class="flex items-center justify-between">
         <!-- 상태 토글 -->
         <div class="flex items-center gap-4">
@@ -178,18 +184,19 @@
       </div>
     </div>
 
+    <!-- 새 주문일 때만 총액 표시 -->
+    <div v-else class="bg-white rounded-lg shadow-sm p-4 mb-6">
+      <div class="text-center">
+        <span class="text-sm text-gray-600">총액: </span>
+        <span class="text-xl font-bold text-gray-900">{{ totalAmount.toLocaleString() }}원</span>
+      </div>
+    </div>
+
     <!-- 하단 버튼들 -->
     <div class="flex gap-3">
       <button 
-        @click="cancelOrder"
-        class="flex-1 bg-red-500 text-white font-bold py-4 rounded-lg hover:bg-red-600 transition-colors"
-      >
-        주문 취소
-      </button>
-      
-      <button 
         @click="goBack"
-        class="bg-gray-400 text-white font-bold py-4 px-6 rounded-lg hover:bg-gray-500 transition-colors"
+        class="flex-1 bg-gray-400 text-white font-bold py-4 rounded-lg hover:bg-gray-500 transition-colors"
       >
         취소
       </button>
@@ -197,9 +204,9 @@
       <button 
         @click="saveOrder"
         :disabled="isSaving"
-        class="bg-green-500 text-white font-bold py-4 px-6 rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
+        class="flex-1 bg-green-500 text-white font-bold py-4 rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
       >
-        {{ isSaving ? '저장 중...' : '완료' }}
+        {{ isSaving ? '저장 중...' : (isNewOrder ? '주문 생성' : '수정 완료') }}
       </button>
     </div>
 
@@ -311,15 +318,15 @@ export default {
       const tableId = route.params.tableId
       
       if (isNewOrder.value) {
-        // 새 주문 생성
+        // 새 주문 생성 - 주문번호는 표시하지 않음
         selectedTableId.value = tableId || ''
-        orderNumber.value = `ORD-${Date.now()}`
+        orderNumber.value = '' // 주문번호 비움
         orderDateTime.value = new Date().toLocaleString('ko-KR')
         orderItems.value = []
         orderStatus.value = '결제대기'
         depositorName.value = ''
         
-        console.log('새 주문 생성 모드')
+        console.log('새 주문 생성 모드 - 주문번호는 저장 시 생성됨')
       } else {
         // 기존 주문 수정
         const order = tableStore.getOrderById(parseInt(route.params.orderId))
@@ -415,7 +422,7 @@ export default {
       
       try {
         if (isNewOrder.value) {
-          // 새 주문 저장
+          // 새 주문 저장 - 현재 세션 확인
           const orderDetails = orderItems.value.map(item => ({
             menu_id: item.id,
             menu_name: item.name,
@@ -425,16 +432,23 @@ export default {
             is_served: false
           }))
           
+          // 현재 테이블의 활성 세션 확인
+          const currentTable = tableStore.getTableById(parseInt(selectedTableId.value))
+          const currentSessionId = currentTable?.current_session_id || null
+          
           console.log('주문 저장 시도:', {
             tableId: parseInt(selectedTableId.value),
             depositorName: depositorName.value,
-            orderDetails
+            orderDetails,
+            currentSessionId: currentSessionId
           })
           
-          const newOrderId = await tableStore.addNewOrder(
+          // 새 주문 생성 (기존 세션이 있으면 그 세션 사용, 없으면 새 세션 생성)
+          const newOrderId = await tableStore.createOrder(
             parseInt(selectedTableId.value), 
             depositorName.value, 
-            orderDetails
+            orderDetails,
+            currentSessionId  // 현재 세션 ID 전달
           )
           
           if (newOrderId) {
@@ -485,38 +499,6 @@ export default {
       }
     }
     
-    const cancelOrder = async () => {
-      if (isNewOrder.value) {
-        if (confirm('주문 작성을 취소하시겠습니까?')) {
-          goBack()
-        }
-      } else {
-        const order = tableStore.getOrderById(parseInt(route.params.orderId))
-        if (!order) {
-          alert('주문을 찾을 수 없습니다.')
-          return
-        }
-        
-        const confirmMsg = `주문 ${order.order_number}을(를) 취소하시겠습니까?\n\n주문 정보:\n- 입금자: ${order.depositor_name}\n- 금액: ${order.total_amount.toLocaleString()}원\n- 상태: ${order.order_status}\n\n취소된 주문은 복구할 수 없습니다.`
-        
-        if (confirm(confirmMsg)) {
-          try {
-            const success = await tableStore.cancelOrder(parseInt(route.params.orderId))
-            if (success) {
-              console.log('주문 취소 성공')
-              alert('주문이 취소되었습니다.')
-              router.push('/dashboard')
-            } else {
-              alert('주문 취소에 실패했습니다.')
-            }
-          } catch (error) {
-            console.error('주문 취소 중 오류:', error)
-            alert('주문 취소 중 오류가 발생했습니다.')
-          }
-        }
-      }
-    }
-    
     const goBack = () => {
       if (window.history.length > 1) {
         router.go(-1)
@@ -554,7 +536,6 @@ export default {
       decreaseQuantity,
       removeItem,
       saveOrder,
-      cancelOrder,
       goBack
     }
   }
