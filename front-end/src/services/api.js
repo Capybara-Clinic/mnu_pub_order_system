@@ -52,96 +52,201 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 // ✅ 1. 메뉴 및 주문 관련
 export const fetchMenuAndOrders = async (tableId) => {
   await wait(200);
-  return {
-    tableId,
-    menus: [
-      {
-        menu_id: 1,
-        menu_name: "감바스",
-        price: 18000,
-        stock_quantity: 5,
-        description: "올리브와 새우를 볶은 스페인 요리",
-        is_available: true,
-        category: "메인메뉴"
-      },
-      {
-        menu_id: 2,
-        menu_name: "해물파전",
-        price: 15000,
-        stock_quantity: 3,
-        description: "바�삭한 해물이 들어간 전통 파전",
-        is_available: true,
-        category: "메인메뉴"
-      },
-      {
-        menu_id: 3,
-        menu_name: "치킨윙",
-        price: 12000,
-        stock_quantity: 0,
-        description: "매콤달콤한 소스의 치킨윙",
-        is_available: false,
-        category: "메인메뉴"
-      },
-      {
-        menu_id: 4,
-        menu_name: "감자튀김",
-        price: 8000,
-        stock_quantity: 10,
-        description: "바삭한 감자튀김",
-        is_available: true,
-        category: "사이드메뉴"
-      },
-      {
-        menu_id: 5,
-        menu_name: "치즈볼",
-        price: 9000,
-        stock_quantity: 7,
-        description: "쫄깃한 치즈볼",
-        is_available: true,
-        category: "사이드메뉴"
-      },
-      {
-        menu_id: 6,
-        menu_name: "콜라",
-        price: 3000,
-        stock_quantity: 20,
-        description: "시원한 콜라",
-        is_available: true,
-        category: "음료"
-      },
-      {
-        menu_id: 7,
-        menu_name: "맥주",
-        price: 5000,
-        stock_quantity: 15,
-        description: "차가운 생맥주",
-        is_available: true,
-        category: "음료"
-      },
-      {
-        menu_id: 8,
-        menu_name: "아이스크림",
-        price: 6000,
-        stock_quantity: 5,
-        description: "바닐라 아이스크림",
-        is_available: true,
-        category: "기타"
-      }
+  return {tableId, // just dummy.
+    "active_orders": [],
+    "categories": [
+        {
+            "category_id": 1,
+            "category_name": "세트메뉴",
+            "menus": [
+                {
+                    "description": "세트메뉴: 토마토 파스타와 콘치즈",
+                    "image_url": null,
+                    "is_available": true,
+                    "menu_id": 1,
+                    "menu_name": "토마토 파스타+콘치즈",
+                    "price": 19900,
+                    "stock_quantity": 98
+                },
+                {
+                    "description": "세트메뉴: 에그인헬과 콘치즈",
+                    "image_url": null,
+                    "is_available": true,
+                    "menu_id": 2,
+                    "menu_name": "에그인헬+콘치즈",
+                    "price": 19900,
+                    "stock_quantity": 100
+                }
+            ]
+        },
+        {
+            "category_id": 2,
+            "category_name": "메인메뉴",
+            "menus": [
+                {
+                    "description": "신선한 토마토로 만든 파스타",
+                    "image_url": null,
+                    "is_available": true,
+                    "menu_id": 3,
+                    "menu_name": "토마토 파스타",
+                    "price": 15900,
+                    "stock_quantity": 99
+                },
+                {
+                    "description": "토마토 소스와 계란 요리",
+                    "image_url": null,
+                    "is_available": true,
+                    "menu_id": 4,
+                    "menu_name": "에그인헬",
+                    "price": 15900,
+                    "stock_quantity": 100
+                },
+                {
+                    "description": "올리브오일과 마늘 그리고 새우로 맛을 낸 파스타",
+                    "image_url": null,
+                    "is_available": true,
+                    "menu_id": 5,
+                    "menu_name": "알리오 올리오",
+                    "price": 16900,
+                    "stock_quantity": 100
+                },
+                {
+                    "description": "올리브오일에 새우를 넣은 스페인 요리",
+                    "image_url": null,
+                    "is_available": true,
+                    "menu_id": 6,
+                    "menu_name": "감바스",
+                    "price": 16900,
+                    "stock_quantity": 100
+                }
+            ]
+        },
+        {
+            "category_id": 3,
+            "category_name": "사이드",
+            "menus": [
+                {
+                    "description": "사이드 메뉴: 고소한 콘치즈",
+                    "image_url": null,
+                    "is_available": true,
+                    "menu_id": 7,
+                    "menu_name": "콘치즈",
+                    "price": 5900,
+                    "stock_quantity": 100
+                },
+                {
+                    "description": "사이드 메뉴: 맛있는 소시지 구이",
+                    "image_url": null,
+                    "is_available": true,
+                    "menu_id": 8,
+                    "menu_name": "소시지 구이",
+                    "price": 5900,
+                    "stock_quantity": 100
+                }
+            ]
+        },
+        {
+            "category_id": 4,
+            "category_name": "주류",
+            "menus": [
+                {
+                    "description": "소오오주우우",
+                    "image_url": null,
+                    "is_available": true,
+                    "menu_id": 9,
+                    "menu_name": "소교수",
+                    "price": 5000,
+                    "stock_quantity": 100
+                },
+                {
+                    "description": "매애애주우우",
+                    "image_url": null,
+                    "is_available": true,
+                    "menu_id": 10,
+                    "menu_name": "맥교수",
+                    "price": 5000,
+                    "stock_quantity": 100
+                },
+                {
+                    "description": "하아이이보오르",
+                    "image_url": null,
+                    "is_available": true,
+                    "menu_id": 11,
+                    "menu_name": "팅키윙키",
+                    "price": 5000,
+                    "stock_quantity": 100
+                }
+            ]
+        },
+        {
+            "category_id": 5,
+            "category_name": "음료",
+            "menus": [
+                {
+                    "description": "시원한 펩시",
+                    "image_url": null,
+                    "is_available": true,
+                    "menu_id": 12,
+                    "menu_name": "펩시",
+                    "price": 2000,
+                    "stock_quantity": 100
+                },
+                {
+                    "description": "상쾌한 스프라이트",
+                    "image_url": null,
+                    "is_available": true,
+                    "menu_id": 13,
+                    "menu_name": "스프라이트",
+                    "price": 2000,
+                    "stock_quantity": 100
+                }
+            ]
+        },
+        {
+            "category_id": 6,
+            "category_name": "기타",
+            "menus": [
+                {
+                    "description": "물",
+                    "image_url": null,
+                    "is_available": true,
+                    "menu_id": 14,
+                    "menu_name": "물추가",
+                    "price": 500,
+                    "stock_quantity": 100
+                },
+                {
+                    "description": "앞접시 추가",
+                    "image_url": null,
+                    "is_available": true,
+                    "menu_id": 15,
+                    "menu_name": "앞접시",
+                    "price": 0,
+                    "stock_quantity": 100
+                },
+                {
+                    "description": "숟가락 추가",
+                    "image_url": null,
+                    "is_available": true,
+                    "menu_id": 16,
+                    "menu_name": "숟가락",
+                    "price": 0,
+                    "stock_quantity": 100
+                },
+                {
+                    "description": "젓가락 추가",
+                    "image_url": null,
+                    "is_available": true,
+                    "menu_id": 17,
+                    "menu_name": "젓가락",
+                    "price": 0,
+                    "stock_quantity": 100
+                }
+            ]
+        }
     ],
-    order_history: [
-      {
-        order_id: 10,
-        order_status: "결제확인",
-        items: [
-          {
-            menu_name: "감바스",
-            quantity: 2,
-            option: "맵지 않게",
-          },
-        ],
-      },
-    ],
-  };
+    "table_id": 1
+  }
 };
 
 export const submitOrder = async ({ tableId, depositorName, phoneNumber, items }) => {

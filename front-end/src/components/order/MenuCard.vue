@@ -7,7 +7,16 @@
       </div>
       
       <!-- 메뉴 이미지 자리 (현재는 회색 박스) -->
-      <div class="w-16 h-16 bg-gray-200 rounded-lg ml-3 flex-shrink-0"></div>
+      <!-- <div class="w-16 h-16 bg-gray-200 rounded-lg ml-3 flex-shrink-0"></div> -->
+      <!-- 메뉴 이미지 (16x16 크기 유지, 모서리 둥글게, 잘림 방지) -->
+      <div class="w-16 h-16 rounded-lg ml-3 flex-shrink-0 overflow-hidden">
+        <!-- 이미지 경로에 맞게 바인딩 -->
+        <img
+          :src="getImageUrl(menu.menu_name)"
+          alt="메뉴 이미지"
+          class="w-full h-full object-cover"
+        />
+      </div>
     </div>
 
     <div class="flex justify-between items-center mt-3">
@@ -67,5 +76,13 @@ const increaseQuantity = (menu) => {
 
 const decreaseQuantity = (menu) => {
   orderStore.removeItem(menu.menu_id);
+};
+
+const getImageUrl = (name) => {
+  try {
+    return require(`@/assets/${name}.png`);
+  } catch (e) {
+    return require('@/assets/placeholder.png');
+  }
 };
 </script>
