@@ -1,8 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import OrderPage from '@/pages/OrderPage.vue';
-import PaymentPage from '@/pages/PaymentPage.vue';
-import PaymentCompletePage from '@/pages/PaymentCompletePage.vue';
-import OrderHistoryPage from '@/pages/OrderHistoryPage.vue';
+import OrderPage from '@/pages/order/OrderPage.vue';
+import PaymentPage from '@/pages/order/PaymentPage.vue';
+import PaymentCompletePage from '@/pages/order/PaymentCompletePage.vue';
+import OrderHistoryPage from '@/pages/order/OrderHistoryPage.vue';
 import CashierDashboard from '@/views/CashierDashboard.vue';
 import TableDetailView from '@/views/TableDetailView.vue';
 
