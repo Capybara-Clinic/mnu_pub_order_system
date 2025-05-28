@@ -1,7 +1,7 @@
 <template>
   <div class="tables-container">
     <div 
-      v-for="table in tables" 
+      v-for="table in visibleTables" 
       :key="table.id" 
       class="table-card" 
       :class="{ done: table.done }"
@@ -10,24 +10,31 @@
       <ul class="order-list">
         <li v-for="(item, index) in table.orders" :key="index">
           <label>
+            <!-- 체크박스: 개별 아이템 상태 제어 -->
             <input 
               type="checkbox" 
               class="item-check" 
               v-model="item.checked" 
               :disabled="table.done" 
             />
+            <!-- 아이템 이름: 체크되었으면 줄긋기 및 흐릿한 색 -->
             <span 
               class="item-text" 
-              :style="{ textDecoration: item.checked || table.done ? 'line-through' : 'none', color: (item.checked || table.done) ? '#999' : 'initial' }"
+              :style="{ 
+                textDecoration: item.checked || table.done ? 'line-through' : 'none', 
+                color: (item.checked || table.done) ? '#999' : 'initial' 
+              }"
             >
               {{ item.name }}
             </span>
+            <!-- 수량 -->
             <span class="qty">{{ item.qty }}</span>
           </label>
         </li>
       </ul>
+      <!-- 주문 완료 버튼 -->
       <button class="complete-btn" @click="toggleDone(table)">
-        주문 완료
+        {{ table.done ? '완료 취소' : '주문 완료' }}
       </button>
     </div>
   </div>
@@ -64,9 +71,7 @@ export default {
           done: false,
           orders: [
             { name: '콘치즈', qty: 1, checked: false },
-            { name: '콜라', qty: 3, checked: false },
-            { name: '콜라', qty: 3, checked: false },
-            { name: '콜라', qty: 3, checked: false },
+            { name: '콜라', qty: 9, checked: false },
           ],
         },
         {
@@ -81,44 +86,51 @@ export default {
       ],
     };
   },
+  computed: {
+    // 모든 항목이 체크된 테이블은 화면에서 제외
+    visibleTables() {
+      return this.tables.filter(table => 
+        !table.orders.every(item => item.checked)
+      );
+    },
+  },
   methods: {
+    // 주문 완료/취소 토글: 체크 상태 일괄 변경
     toggleDone(table) {
       table.done = !table.done;
-      if (table.done) {
-        // 완료 상태면 체크박스 모두 체크 처리
-        table.orders.forEach(item => item.checked = true);
-      } else {
-        // 다시 취소하면 체크 해제
-        table.orders.forEach(item => item.checked = false);
-      }
+      table.orders.forEach(item => {
+        item.checked = table.done;
+      });
     },
   },
 };
 </script>
 
 <style scoped>
-/* 여기에 앞서 주신 CSS 복사 붙여넣으면 됩니다 */
-/* 예: */
+/* 전체 테이블 카드들을 담는 컨테이너 */
 .tables-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
+  display: flex;              /* 가로로 배치 */
+  flex-wrap: wrap;            /* 넘치면 줄바꿈 */
+  gap: 20px;                  /* 카드 사이 간격 */
   justify-content: flex-start;
 }
 
+/* 개별 테이블 카드 스타일 */
 .table-card {
-  background-color: #eef2d5;
-  padding: 20px;
-  width: calc((100% - 60px) / 4);
-  border-radius: 10px;
+  background-color: #eef2d5;  /* 연한 초록 배경 */
+  padding: 20px;              /* 내부 여백 */
+  width: calc((100% - 60px) / 4); /* 4개씩 배치 */
+  border-radius: 10px;        /* 둥근 테두리 */
   box-sizing: border-box;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1); /* 약간의 그림자 */
 }
 
+/* 완료된 테이블 카드: 버튼 색을 더 진한 초록색으로 */
 .table-card.done .complete-btn {
-  background-color: #00e600;
+  background-color: #218838;
 }
 
+/* 각 주문 항목 라벨 정렬 */
 .order-list label {
   display: flex;
   justify-content: space-between;
@@ -126,5 +138,31 @@ export default {
   cursor: pointer;
 }
 
-/* 나머지 CSS 붙여넣기 */
+/* 주문 항목 텍스트 */
+.item-text {
+  flex-grow: 1; /* 남은 공간 채우기 */
+  white-space: nowrap;
+}
+
+/* 수량 스타일 */
+.qty {
+  margin-left: 10px;
+  font-weight: bold;
+}
+
+/* ✅ 초록색 "주문 완료" 버튼 스타일 */
+.complete-btn {
+  margin-top: 10px;
+  padding: 5px 10px;
+  background-color: #28a745;  /* 초록색 배경 */
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  color: white;               /* 글자 흰색으로 */
+}
+
+/* 버튼 hover 시 진한 초록색으로 변경 */
+.complete-btn:hover {
+  background-color: #218838;
+}
 </style>
