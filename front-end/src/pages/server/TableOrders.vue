@@ -35,7 +35,7 @@
 
 <script>
 export default {
-  name: 'OrderTables',
+  name: 'TableOrders',
   data() {
     return {
       tables: [

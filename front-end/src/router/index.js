@@ -7,7 +7,8 @@ import CashierDashboard from '@/pages/cashier/CashierDashboard.vue';
 import TableDetailView from '@/pages/cashier/TableDetailView.vue';
 import OrderManagementView from '@/pages/cashier/OrderManagementView.vue';
 import OrderEditView from '@/pages/cashier/OrderEditView.vue';
-import InventoryManagement from '@/pages/cashier/InventoryManagementView.vue'
+import InventoryManagement from '@/pages/cashier/InventoryManagementView.vue';
+import TableOrders from '@/pages/server/TableOrders.vue';
 
 // 전체 주문 관리 페이지
 // {
@@ -117,6 +118,11 @@ const routes = [
     redirect: '/'
   },
   
+  {
+    path: '/server',
+    name: 'TableOrders', 
+    component: TableOrders
+  },
 
 ];
 
