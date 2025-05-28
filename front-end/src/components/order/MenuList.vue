@@ -18,7 +18,7 @@
 import MenuCard from './MenuCard.vue';
 import { useOrderStore } from '@/store/order';
 
-const { menus } = defineProps(['menus']);
+const menus = defineProps(['menus']);
 const orderStore = useOrderStore();
 
 const onAdd = (menu) => {

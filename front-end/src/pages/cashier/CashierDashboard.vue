@@ -44,7 +44,7 @@
 import { onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTableStore } from '@/stores/tableStore'
-import TableCard from '@/components/TableCard.vue'
+import TableCard from '@/components/cashier/TableCard.vue'
 
 export default {
   name: 'CashierDashboard',

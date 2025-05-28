@@ -276,6 +276,9 @@ import { useRouter, useRoute } from 'vue-router'
 import { useTableStore } from '@/stores/tableStore'
 import { useInventoryStore } from '@/stores/inventoryStore'
 
+// TODO : @Ninoling
+// 컴포넌트로 분리하세요....
+
 export default {
   name: 'OrderEditView',
   
