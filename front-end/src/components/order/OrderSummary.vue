@@ -1,11 +1,11 @@
 <template>
   <!-- 하단 고정 주문 요약 -->
-  <div class="min-h-screen bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+  <div class="fixed bottom-0 bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
     <!-- 주문 내역이 있을 때만 펼칠 수 있는 영역 -->
     <div v-if="order.items.length > 0" class="transition-all duration-300" :class="{ 'max-h-64 overflow-y-auto': isExpanded, 'max-h-0 overflow-hidden': !isExpanded }">
       <div class="px-4 py-3 border-b border-gray-100">
         <div class="flex justify-between items-center mb-3">
-          <span class="font-semibold text-gray-900">주문 내역</span>
+          <span class="font-semibold text-gray-900">장바구니</span>
           <button 
             @click="isExpanded = !isExpanded"
             class="text-gray-500 hover:text-gray-700"
@@ -55,6 +55,9 @@
           @click="isExpanded = !isExpanded"
           class="flex items-center gap-2 text-gray-700"
         >
+          <div class="text-sm font-medium">
+            <b>클릭해서 장바구니를 열 수 있어요!</b>
+          </div>
           <span class="text-sm font-medium">총 {{ totalQuantity }}개</span>
           <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': isExpanded }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -74,6 +77,9 @@
           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
           v-model="order.phoneNumber"
           placeholder="전화번호 입력"
+          inputmode="numeric"
+          pattern="[0-9\-]*"
+          @input="formatPhoneNumber"
         />
       </div>
 
@@ -135,6 +141,26 @@ const clearOrder = () => {
   }
 };
 
+const formatPhoneNumber = (e) => {
+  let num = e.target.value.replace(/\D/g, ''); // 숫자만 추출
+  let formatted = '';
+
+  if (num.startsWith('02')) {
+    // 서울 번호 예외 처리
+    if (num.length <= 2) formatted = num;
+    else if (num.length <= 5) formatted = `${num.slice(0, 2)}-${num.slice(2)}`;
+    else if (num.length <= 9) formatted = `${num.slice(0, 2)}-${num.slice(2, 5)}-${num.slice(5)}`;
+    else formatted = `${num.slice(0, 2)}-${num.slice(2, 6)}-${num.slice(6, 10)}`;
+  } else {
+    if (num.length <= 3) formatted = num;
+    else if (num.length <= 7) formatted = `${num.slice(0, 3)}-${num.slice(3)}`;
+    else if (num.length <= 11) formatted = `${num.slice(0, 3)}-${num.slice(3, 7)}-${num.slice(7)}`;
+    else formatted = `${num.slice(0, 3)}-${num.slice(3, 7)}-${num.slice(7, 11)}`;
+  }
+
+  e.target.value = formatted;
+  order.phoneNumber = formatted;
+};
 const router = useRouter();
 
 const submit = async () => {
