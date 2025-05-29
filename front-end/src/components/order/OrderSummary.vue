@@ -135,40 +135,6 @@ const clearOrder = () => {
   }
 };
 
-// const submit = async () => {
-//   if (order.items.length === 0) return;
-  
-//   if (!order.depositorName.trim()) {
-//     alert('이름을 입력해주세요.');
-//     return;
-//   }
-  
-//   if (!order.phoneNumber.trim()) {
-//     alert('전화번호를 입력해주세요.');
-//     return;
-//   }
-
-//   const payload = {
-//     tableId: order.tableId,
-//     depositorName: order.depositorName,
-//     phoneNumber: order.phoneNumber,
-//     items: order.items.map(i => ({
-//       menu_id: i.menu_id,
-//       quantity: i.quantity,
-//       option: '기본',
-//     }))
-//   };
-  
-//   try {
-//     const res = await submitOrder(payload);
-//     alert(res.message);
-//     order.reset();
-//     isExpanded.value = false;
-//   } catch (error) {
-//     alert('주문 처리 중 오류가 발생했습니다.');
-//   }
-// };
-
 const router = useRouter();
 
 const submit = async () => {
@@ -186,7 +152,7 @@ const submit = async () => {
 
   const payload = {
     tableId: order.tableId,
-    depositorName: order.depositorName,
+    depositor: order.depositorName,
     phoneNumber: order.phoneNumber,
     items: order.items.map(i => ({
       menu_id: i.menu_id,
@@ -197,11 +163,17 @@ const submit = async () => {
   
   try {
     const res = await submitOrder(payload);
-    alert(res.message);
-    router.push(`/payment/${order.tableId}`); // ✅ 이동 추가
+
+    {
+      alert(res.message);
+      router.push(`/payment/${order.tableId}`); // ✅ 이동 추가
+    }
+
   } catch (error) {
-    alert('주문 처리 중 오류가 발생했습니다.');
+    alert('주문 처리 중 오류가 발생했습니다.' + error);
   }
+  
+
 };
 
 </script>
