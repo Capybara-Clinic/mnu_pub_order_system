@@ -127,32 +127,29 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { fetchOrderHistoryByTable } from '@/services/api';
+import { fetchOrderById } from '@/services/api'; // ← 변경된 함수 임포트
 
 const route = useRoute();
 const router = useRouter();
+
 const orderId = route.params.orderId;
+console.log(orderId)
 const orderInfo = ref({});
 
 onMounted(async () => {
   try {
-    // 실제로는 orderId로 특정 주문을 조회해야 하지만, 
-    // 현재 API가 테이블별 조회만 지원하므로 임시로 구현
-    const tableId = 1; // 실제로는 route나 store에서 가져와야 함
-    const res = await fetchOrderHistoryByTable(tableId);
-    
-    // 해당 주문 ID와 일치하는 주문 찾기
-    const foundOrder = res.orders?.find(order => order.order_id == orderId);
-    if (foundOrder) {
-      orderInfo.value = foundOrder;
-    } else {
-      // 주문을 찾을 수 없는 경우 기본값 설정
-      orderInfo.value = {
-        order_id: orderId,
-        total_amount: 0,
-        items: []
-      };
-    }
+    const res = await fetchOrderById(orderId);
+    orderInfo.value = {
+      order_id: res.order_id,
+      depositor_name: res.depositor_name,
+      total_amount: res.total_amount,
+      items: res.items.map(item => ({
+        menu_name: item.menu_name,
+        quantity: item.quantity,
+        price: item.subtotal / item.quantity, // 개당 가격 추정
+        option: '기본' // 옵션이 없으므로 기본값 처리
+      }))
+    };
   } catch (error) {
     console.error('주문 정보 조회 실패:', error);
     orderInfo.value = {
