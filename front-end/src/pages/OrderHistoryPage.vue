@@ -123,11 +123,11 @@ const searchQuery = ref('');
 // 검색 필터링
 const filteredOrders = computed(() => {
   if (!searchQuery.value.trim()) return orders.value;
-  
+
   const query = searchQuery.value.toLowerCase();
   return orders.value.filter(order => 
     order.order_id.toString().includes(query) ||
-    order.items.some(item => item.menu_name.toLowerCase().includes(query))
+    (order.items || []).some(item => item.menu_name?.toLowerCase().includes(query))
   );
 });
 
