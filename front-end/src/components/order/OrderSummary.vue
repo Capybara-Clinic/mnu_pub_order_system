@@ -113,7 +113,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useOrderStore } from '@/store/order';
-import { submitOrder } from '@/services/api';
+// import { submitOrder } from '@/services/api';
 import { useRouter } from 'vue-router';
 
 
@@ -150,20 +150,20 @@ const submit = async () => {
     return;
   }
 
-  const payload = {
-    tableId: order.tableId,
-    depositorName: order.depositorName,
-    phoneNumber: order.phoneNumber,
-    items: order.items.map(i => ({
-      menu_id: i.menu_id,
-      quantity: i.quantity,
-      option: '기본',
-    }))
-  };
+  // const payload = {
+  //   tableId: order.tableId,
+  //   depositorName: order.depositorName,
+  //   phoneNumber: order.phoneNumber,
+  //   items: order.items.map(i => ({
+  //     menu_id: i.menu_id,
+  //     quantity: i.quantity,
+  //     option: '기본',
+  //   }))
+  // };
   
   try {
-    const res = await submitOrder(payload);
-    alert(res.message);
+    // const res = await submitOrder(payload);
+    // alert(res.message);
     router.push(`/payment/${order.tableId}`); // ✅ 이동 추가
   } catch (error) {
     alert('주문 처리 중 오류가 발생했습니다.' + error);

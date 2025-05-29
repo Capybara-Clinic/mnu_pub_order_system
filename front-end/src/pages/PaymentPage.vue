@@ -181,9 +181,10 @@ const onSubmit = async () => {
         option: '기본',
       }))
     });
-    
+    console.log(order)
     alert(res.message);
     router.push(`/payment/complete/${res.order_id}`);
+    console.log(res.order_id)
   } catch (error) {
     alert('결제 처리 중 오류가 발생했습니다.');
   }
