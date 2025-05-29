@@ -39,6 +39,11 @@ export const submitOrder = ({ tableId, depositor, items }) => {
   });
 };
 
+// 특정 주문 확인
+export const fetchOrderById = (orderId) => {
+  return jsonFetch(`${BASE_URL}/order/payment_info/${orderId}`);
+};
+
 // ✅ 캐셔: 주문 결제 확인
 export const confirmOrder = (orderId) => {
   return jsonFetch(`${BASE_URL}/cashier/confirm_order`, {
