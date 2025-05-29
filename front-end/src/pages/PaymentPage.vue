@@ -173,7 +173,7 @@ const onSubmit = async () => {
   try {
     const res = await submitOrder({
       tableId: order.tableId,
-      depositorName: order.depositorName,
+      depositor: order.depositorName,
       phoneNumber: order.phoneNumber,
       items: order.items.map(item => ({
         menu_id: item.menu_id,
@@ -182,6 +182,7 @@ const onSubmit = async () => {
       }))
     });
     
+    alert(res.message);
     router.push(`/payment/complete/${res.order_id}`);
   } catch (error) {
     alert('결제 처리 중 오류가 발생했습니다.');

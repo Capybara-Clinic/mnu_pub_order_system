@@ -152,7 +152,7 @@ const submit = async () => {
 
   const payload = {
     tableId: order.tableId,
-    depositor: order.depositorName,
+    depositorName: order.depositorName,
     phoneNumber: order.phoneNumber,
     items: order.items.map(i => ({
       menu_id: i.menu_id,
@@ -163,12 +163,8 @@ const submit = async () => {
   
   try {
     const res = await submitOrder(payload);
-
-    {
-      alert(res.message);
-      router.push(`/payment/${order.tableId}`); // ✅ 이동 추가
-    }
-
+    alert(res.message);
+    router.push(`/payment/${order.tableId}`); // ✅ 이동 추가
   } catch (error) {
     alert('주문 처리 중 오류가 발생했습니다.' + error);
   }
