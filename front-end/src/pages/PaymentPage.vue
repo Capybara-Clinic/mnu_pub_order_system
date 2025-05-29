@@ -8,23 +8,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
           </svg>
         </button>
-        <h1 class="text-lg font-semibold text-gray-900">결제하기 - 아닌 스크롤</h1>
-      </div>
-    </div>
-
-    <!-- 검색 영역 -->
-    <div class="bg-white px-4 py-3 border-b">
-      <div class="flex gap-2">
-        <div class="flex-1 relative">
-          <input
-            type="text"
-            placeholder="부스 검 또는 로고"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-          />
-        </div>
-        <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors">
-          검색
-        </button>
+        <h1 class="text-lg font-semibold text-gray-900">결제를 하다</h1>
       </div>
     </div>
 
@@ -108,6 +92,19 @@
         </div>
       </label>
     </div>
+    
+    <div class="bg-white mx-4 mt-4 rounded-lg border border-gray-200 p-4">
+      <div class="text-md text-gray-700 space-y-2 max-h-60 overflow-y-auto mb-3">
+        개인정보 이용 약관
+      </div>
+      <div class="text-sm text-gray-700 space-y-2 max-h-60 overflow-y-auto">
+        <p>1. 수집 항목: 이름, 전화번호</p>
+        <p>2. 수집 목적: 주문 처리 및 고객 응대</p>
+        <p>3. 보유 기간: 주문 완료 후 1개월간 보관 후 파기</p>
+        <p>4. 이용자는 개인정보 수집에 동의하지 않을 권리가 있으나, 이 경우 서비스 이용에 제한이 있을 수 있습니다.</p>
+      </div>
+    </div>
+
 
     <!-- 하단 고정 결제 버튼 -->
     <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
