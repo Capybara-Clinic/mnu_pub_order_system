@@ -112,7 +112,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { fetchOrderHistoryByTable } from '@/services/api';
+import { fetchTableOrders } from '@/services/api';
 
 const route = useRoute();
 const router = useRouter();
@@ -132,7 +132,7 @@ const filteredOrders = computed(() => {
 });
 
 onMounted(async () => {
-  const res = await fetchOrderHistoryByTable(tableId);
+  const res = await fetchTableOrders(tableId);
   orders.value = res.orders || [];
 });
 
