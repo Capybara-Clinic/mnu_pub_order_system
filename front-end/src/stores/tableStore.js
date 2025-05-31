@@ -3,339 +3,44 @@ import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 
 export const useTableStore = defineStore('table', () => {
-    // 테이블 개수 설정 (10개 고정)
-    const TABLE_COUNT = 10
+    // 테이블 개수 설정 (12개로 변경)
+    const TABLE_COUNT = 12
     
-    // 테이블 목록 (세션 ID 추가)
+    // 테이블 목록 (12개 모두 빈 상태) - Flask 폴백용
     const tables = ref([
-        { 
-            table_id: 1, 
-            is_occupied: true,
-            current_session_id: 'session_001', // 현재 세션 ID 추가
-            current_order: {
-                order_id: 101,
-                session_id: 'session_001', // 주문에도 세션 ID
-                order_status: '완료',
-                total_amount: 20000,
-                order_time: '2024-01-05T19:15:00Z',
-                depositor_name: '김철수',
-                order_number: 'ORD001'
-            }
-        },
-        { 
-            table_id: 2, 
-            is_occupied: true,
-            current_session_id: 'session_002',
-            current_order: {
-                order_id: 102,
-                session_id: 'session_002',
-                order_status: '결제확인',
-                total_amount: 39000,
-                order_time: '2024-01-05T19:30:00Z',
-                depositor_name: '이영희',
-                order_number: 'ORD002'
-            }
-        },
-        { 
-            table_id: 3, 
-            is_occupied: true,
-            current_session_id: 'session_003',
-            current_order: {
-                order_id: 103,
-                session_id: 'session_003',
-                order_status: '결제확인',
-                total_amount: 18000,
-                order_time: '2024-01-05T19:25:00Z',
-                depositor_name: '박민수',
-                order_number: 'ORD003'
-            }
-        },
+        { table_id: 1, is_occupied: false, current_session_id: null, current_order: null },
+        { table_id: 2, is_occupied: false, current_session_id: null, current_order: null },
+        { table_id: 3, is_occupied: false, current_session_id: null, current_order: null },
         { table_id: 4, is_occupied: false, current_session_id: null, current_order: null },
         { table_id: 5, is_occupied: false, current_session_id: null, current_order: null },
-        { 
-            table_id: 6, 
-            is_occupied: true,
-            current_session_id: 'session_004',
-            current_order: {
-                order_id: 104,
-                session_id: 'session_004',
-                order_status: '결제대기',
-                total_amount: 34000,
-                order_time: '2024-01-05T19:42:00Z',
-                depositor_name: '최지훈',
-                order_number: 'ORD004'
-            }
-        },
+        { table_id: 6, is_occupied: false, current_session_id: null, current_order: null },
         { table_id: 7, is_occupied: false, current_session_id: null, current_order: null },
         { table_id: 8, is_occupied: false, current_session_id: null, current_order: null },
         { table_id: 9, is_occupied: false, current_session_id: null, current_order: null },
-        { 
-            table_id: 10, 
-            is_occupied: true,
-            current_session_id: 'session_005',
-            current_order: {
-                order_id: 105,
-                session_id: 'session_005',
-                order_status: '결제대기',
-                total_amount: 8000,
-                order_time: '2024-01-05T19:35:00Z',
-                depositor_name: '정수연',
-                order_number: 'ORD005'
-            }
-        }
+        { table_id: 10, is_occupied: false, current_session_id: null, current_order: null },
+        { table_id: 11, is_occupied: false, current_session_id: null, current_order: null },
+        { table_id: 12, is_occupied: false, current_session_id: null, current_order: null }
     ])
     
-    // 주문 상세 데이터 (세션 ID 추가)
+    // 주문 데이터 (빈 상태) - Flask 폴백용
     const orders = ref({
-        101: {
-            order_id: 101,
-            session_id: 'session_001', // 세션 ID 추가
-            table_id: 1,
-            depositor_name: '김철수',
-            total_amount: 20000,
-            order_status: '완료',
-            order_time: '2024-01-05T19:15:00Z',
-            order_number: 'ORD001',
-            order_details: [
-                {
-                    order_detail_id: 1,
-                    menu_id: 1,
-                    menu_name: '알리오올리오',
-                    quantity: 1,
-                    unit_price: 12000,
-                    subtotal: 12000,
-                    is_served: true
-                },
-                {
-                    order_detail_id: 2,
-                    menu_id: 5,
-                    menu_name: '콘치즈',
-                    quantity: 1,
-                    unit_price: 8000,
-                    subtotal: 8000,
-                    is_served: true
-                }
-            ]
-        },
-        102: {
-            order_id: 102,
-            session_id: 'session_002',
-            table_id: 2,
-            depositor_name: '이영희',
-            total_amount: 39000,
-            order_status: '결제확인',
-            order_time: '2024-01-05T19:30:00Z',
-            order_number: 'ORD002',
-            order_details: [
-                {
-                    order_detail_id: 3,
-                    menu_id: 2,
-                    menu_name: '감바스',
-                    quantity: 1,
-                    unit_price: 15000,
-                    subtotal: 15000,
-                    is_served: false
-                },
-                {
-                    order_detail_id: 4,
-                    menu_id: 7,
-                    menu_name: '나쵸',
-                    quantity: 2,
-                    unit_price: 12000,
-                    subtotal: 24000,
-                    is_served: false
-                }
-            ]
-        },
-        103: {
-            order_id: 103,
-            session_id: 'session_003',
-            table_id: 3,
-            depositor_name: '박민수',
-            total_amount: 18000,
-            order_status: '결제확인',
-            order_time: '2024-01-05T19:25:00Z',
-            order_number: 'ORD003',
-            order_details: [
-                {
-                    order_detail_id: 5,
-                    menu_id: 3,
-                    menu_name: '에그인더헬',
-                    quantity: 1,
-                    unit_price: 8000,
-                    subtotal: 8000,
-                    is_served: true
-                },
-                {
-                    order_detail_id: 6,
-                    menu_id: 9,
-                    menu_name: '맥주',
-                    quantity: 2,
-                    unit_price: 5000,
-                    subtotal: 10000,
-                    is_served: false
-                }
-            ]
-        },
-        104: {
-            order_id: 104,
-            session_id: 'session_004',
-            table_id: 6,
-            depositor_name: '최지훈',
-            total_amount: 34000,
-            order_status: '결제대기',
-            order_time: '2024-01-05T19:42:00Z',
-            order_number: 'ORD004',
-            order_details: [
-                {
-                    order_detail_id: 7,
-                    menu_id: 1,
-                    menu_name: '알리오올리오',
-                    quantity: 2,
-                    unit_price: 12000,
-                    subtotal: 24000,
-                    is_served: false
-                },
-                {
-                    order_detail_id: 8,
-                    menu_id: 9,
-                    menu_name: '맥주',
-                    quantity: 2,
-                    unit_price: 5000,
-                    subtotal: 10000,
-                    is_served: false
-                }
-            ]
-        },
-        105: {
-            order_id: 105,
-            session_id: 'session_005',
-            table_id: 10,
-            depositor_name: '정수연',
-            total_amount: 8000,
-            order_status: '결제대기',
-            order_time: '2024-01-05T19:35:00Z',
-            order_number: 'ORD005',
-            order_details: [
-                {
-                    order_detail_id: 9,
-                    menu_id: 3,
-                    menu_name: '에그인더헬',
-                    quantity: 1,
-                    unit_price: 8000,
-                    subtotal: 8000,
-                    is_served: false
-                }
-            ]
-        }
+        // Flask 서버 연결 안될 때만 사용되는 빈 구조
     })
     
-    // 세션 관리 데이터 추가
+    // 세션 데이터 (빈 상태) - Flask 폴백용  
     const sessions = ref({
-        'session_001': {
-            session_id: 'session_001',
-            table_id: 1,
-            start_time: '2024-01-05T19:15:00Z',
-            end_time: null,
-            is_active: true,
-            customer_count: 2, // 고객 수 (선택사항)
-            notes: '' // 메모 (선택사항)
-        },
-        'session_002': {
-            session_id: 'session_002',
-            table_id: 2,
-            start_time: '2024-01-05T19:30:00Z',
-            end_time: null,
-            is_active: true,
-            customer_count: 3,
-            notes: ''
-        },
-        'session_003': {
-            session_id: 'session_003',
-            table_id: 3,
-            start_time: '2024-01-05T19:25:00Z',
-            end_time: null,
-            is_active: true,
-            customer_count: 1,
-            notes: ''
-        },
-        'session_004': {
-            session_id: 'session_004',
-            table_id: 6,
-            start_time: '2024-01-05T19:42:00Z',
-            end_time: null,
-            is_active: true,
-            customer_count: 4,
-            notes: ''
-        },
-        'session_005': {
-            session_id: 'session_005',
-            table_id: 10,
-            start_time: '2024-01-05T19:35:00Z',
-            end_time: null,
-            is_active: true,
-            customer_count: 1,
-            notes: ''
-        }
+        // Flask 서버 연결 안될 때만 사용되는 빈 구조
     })
     
-    // 결제 정보 (세션 ID 추가)
+    // 결제 데이터 (빈 상태) - Flask 폴백용
     const payments = ref({
-        101: {
-            payment_id: 201,
-            order_id: 101,
-            session_id: 'session_001', // 세션 ID 추가
-            amount: 20000,
-            payment_status: '완료',
-            is_verified: true,
-            payment_method: '계좌이체',
-            check_time: '2024-01-05T19:20:00Z'
-        },
-        102: {
-            payment_id: 202,
-            order_id: 102,
-            session_id: 'session_002',
-            amount: 39000,
-            payment_status: '완료',
-            is_verified: true,
-            payment_method: '계좌이체',
-            check_time: '2024-01-05T19:35:00Z'
-        },
-        103: {
-            payment_id: 203,
-            order_id: 103,
-            session_id: 'session_003',
-            amount: 18000,
-            payment_status: '완료',
-            is_verified: true,
-            payment_method: '계좌이체',
-            check_time: '2024-01-05T19:30:00Z'
-        },
-        104: {
-            payment_id: 204,
-            order_id: 104,
-            session_id: 'session_004',
-            amount: 34000,
-            payment_status: '대기중',
-            is_verified: false,
-            payment_method: '계좌이체',
-            check_time: null
-        },
-        105: {
-            payment_id: 205,
-            order_id: 105,
-            session_id: 'session_005',
-            amount: 8000,
-            payment_status: '대기중',
-            is_verified: false,
-            payment_method: '계좌이체',
-            check_time: null
-        }
+        // Flask 서버 연결 안될 때만 사용되는 빈 구조
     })
     
-    // 계산된 속성
+    // 계산된 속성 (Flask 우선, 로컬 폴백)
     const occupiedTableCount = computed(() => tables.value.filter(t => t.is_occupied).length)
     const totalRevenue = computed(() => {
+        // Flask 데이터가 없으면 로컬 orders에서 계산 (현재는 빈 상태)
         return Object.values(orders.value)
             .filter(order => order.order_status === '완료')
             .reduce((sum, order) => {
@@ -755,9 +460,9 @@ export const useTableStore = defineStore('table', () => {
         return Math.round((servedCount / orderDetails.length) * 100)
     }
     
-    // 초기화 (로컬 버전)
+    // 초기화 (Flask 우선, 로컬 폴백)
     const initializeStore = () => {
-        console.log('🚀 Table Store 초기화 (로컬 모드 + 세션 지원)')
+        console.log('🚀 Table Store 초기화 (Flask 우선, 로컬 폴백)')
     }
     
     return {

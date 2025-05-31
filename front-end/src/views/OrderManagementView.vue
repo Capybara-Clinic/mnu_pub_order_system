@@ -80,7 +80,7 @@
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">메뉴</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">총액</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상세</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -127,23 +127,14 @@
                   </span>
                 </td>
                 
-                <!-- 관리 버튼 -->
+                <!-- 상세 보기 버튼 -->
                 <td class="px-4 py-4 whitespace-nowrap text-sm">
-                  <div class="flex gap-2">
-                    <button 
-                      @click="goToOrderDetail(order.table_id, order.order_id)"
-                      class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs transition-colors"
-                    >
-                      수정
-                    </button>
-                    <button 
-                      v-if="order.order_status !== '취소' && order.order_status !== '완료'"
-                      @click="handleCancelOrder(order.order_id)"
-                      class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs transition-colors"
-                    >
-                      취소
-                    </button>
-                  </div>
+                  <button 
+                    @click="showOrderDetail(order)"
+                    class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs transition-colors"
+                  >
+                    상세 보기
+                  </button>
                 </td>
               </tr>
               
@@ -353,35 +344,37 @@ export default {
       }
     }
     
-    // 주문 상세로 이동
-    const goToOrderDetail = (tableId, orderId) => {
-      router.push(`/order/edit/${tableId}/${orderId}`)
-    }
-    
-    // 주문 취소
-    const handleCancelOrder = async (orderId) => {
-      const order = tableStore.getOrderById(orderId)
-      if (!order) {
-        alert('주문을 찾을 수 없습니다.')
-        return
-      }
+    // 주문 상세 정보 표시 (alert)
+    const showOrderDetail = (order) => {
+      // 메뉴 상세 정보 생성
+      const menuDetails = order.order_details?.map(detail => {
+        const servedStatus = detail.is_served ? '✅ 서빙완료' : '⏳ 준비중'
+        return `• ${detail.menu_name} × ${detail.quantity}개 = ${detail.subtotal.toLocaleString()}원 ${servedStatus}`
+      }).join('\n') || '메뉴 정보 없음'
       
-      const confirmMsg = `주문 ${order.order_number}을(를) 취소하시겠습니까?\n입금자: ${order.depositor_name}\n금액: ${order.total_amount.toLocaleString()}원\n\n취소된 주문은 복구할 수 없습니다.`
+      // 주문 시간 포맷
+      const orderTime = formatTime(order.order_time)
       
-      if (confirm(confirmMsg)) {
-        try {
-          const success = await tableStore.cancelOrder(orderId)
-          if (success) {
-            console.log(`✅ 주문 ${orderId} 취소 완료`)
-            alert('주문이 취소되었습니다.')
-          } else {
-            alert('주문 취소에 실패했습니다.')
-          }
-        } catch (error) {
-          console.error('주문 취소 중 오류:', error)
-          alert('주문 취소 중 오류가 발생했습니다.')
-        }
-      }
+      const detailInfo = `
+🍽️ 주문 상세 정보
+
+📋 주문번호: ${order.order_number}
+🪑 테이블: ${order.table_id}번
+👤 입금자: ${order.depositor_name}
+📅 주문시간: ${orderTime}
+📊 상태: ${getStatusText(order.order_status)}
+
+🍜 주문 메뉴:
+${menuDetails}
+
+💰 총 금액: ${order.total_amount.toLocaleString()}원
+
+📝 추가 정보:
+- 주문 ID: ${order.order_id}
+- 세션 ID: ${order.session_id || 'N/A'}
+      `
+      
+      alert(detailInfo)
     }
     
     // ===== Return =====
@@ -407,8 +400,7 @@ export default {
       formatTime,
       getStatusText,
       getStatusBadgeClass,
-      goToOrderDetail,
-      handleCancelOrder
+      showOrderDetail
     }
   }
 }
