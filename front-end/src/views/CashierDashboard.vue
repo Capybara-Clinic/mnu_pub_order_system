@@ -105,20 +105,62 @@ export default {
       }
     }
     
-    // 🎯 이벤트 핸들러들
-    const handleTableClick = (tableId) => {
+    // 🎯 API 연결된 테이블 클릭 이벤트 핸들러
+    const handleTableClick = async (tableId) => {
       console.log(`[Dashboard] 테이블 ${tableId} 클릭됨`)
       
-      const table = tableStore.getTableById(tableId)
-      
-      if (!table.is_occupied) {
-        // ✅ 빈 테이블 → 새 주문 페이지로 이동
-        console.log(`[Dashboard] 빈 테이블 ${tableId} - 새 주문 페이지로 이동`)
-        router.push(`/order/new/${tableId}`)
-      } else {
-        // ✅ 사용 중인 테이블 → 상세 페이지로 이동
-        console.log(`[Dashboard] 테이블 ${tableId} - 상세 페이지로 이동`)
-        router.push(`/table/${tableId}`)
+      try {
+        // Flask HTTP 데이터에서 테이블 정보 확인
+        const table = flaskTables.value.find(t => t.table_id === tableId)
+        
+        if (!table) {
+          console.error(`테이블 ${tableId} 정보를 찾을 수 없습니다`)
+          alert('테이블 정보를 찾을 수 없습니다')
+          return
+        }
+
+        if (!table.is_occupied) {
+          // ✅ 빈 테이블 → 새 주문 페이지로 이동
+          console.log(`[Dashboard] 빈 테이블 ${tableId} - 새 주문 페이지로 이동`)
+          
+          try {
+            // 테이블 메뉴 정보 미리 확인 (선택사항)
+            console.log(`🔄 테이블 ${tableId} 메뉴 정보 확인 중...`)
+            const menuData = await cashierAPI.fetchTableMenu(tableId)
+            console.log(`✅ 테이블 ${tableId} 메뉴 데이터:`, menuData)
+            
+            // 새 주문 페이지로 이동
+            router.push(`/order/new/${tableId}`)
+            
+          } catch (error) {
+            console.error(`❌ 테이블 ${tableId} 메뉴 조회 실패:`, error)
+            // 에러가 있어도 페이지는 이동
+            router.push(`/order/new/${tableId}`)
+          }
+          
+        } else {
+          // ✅ 사용 중인 테이블 → 상세 페이지로 이동
+          console.log(`[Dashboard] 테이블 ${tableId} - 상세 페이지로 이동`)
+          
+          try {
+            // 테이블 주문 정보 미리 조회
+            console.log(`🔄 테이블 ${tableId} 주문 정보 조회 중...`)
+            const orderData = await cashierAPI.fetchTableOrders(tableId)
+            console.log(`✅ 테이블 ${tableId} 주문 데이터:`, orderData)
+            
+            // 상세 페이지로 이동 (주문 데이터를 라우터 params로 전달 가능)
+            router.push(`/table/${tableId}`)
+            
+          } catch (error) {
+            console.error(`❌ 테이블 ${tableId} 주문 조회 실패:`, error)
+            // 에러가 있어도 페이지는 이동
+            router.push(`/table/${tableId}`)
+          }
+        }
+        
+      } catch (error) {
+        console.error(`[Dashboard] 테이블 ${tableId} 클릭 처리 실패:`, error)
+        alert(`테이블 ${tableId} 처리 중 오류가 발생했습니다`)
       }
     }
     
