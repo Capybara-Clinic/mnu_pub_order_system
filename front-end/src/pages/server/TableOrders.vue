@@ -84,190 +84,105 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { servingApi, handleApiCall } from '@/services/api.js';
-import { completeItem } from '@/services/api.js'; // 위치 맞게 import
+import { 
+  fetchServingList, 
+  completeMenuServing, 
+  completeOrderServing 
+} from '@/services/api.js';
 
-// 반응형 데이터
-const tables = ref([
-    {
-        id: 1,
-        name: '1번 테이블',
-        done: false,
-        orderTime: '2025-05-28T14:30:00Z',
-        orders: [
-            { name: '에그 인 헬', qty: 3, checked: false, orderDetailId: 101 },
-            { name: '콘치즈', qty: 2, checked: false, orderDetailId: 102 },
-            { name: '맥주', qty: 4, checked: false, orderDetailId: 103 },
-        ],
-    },
-    {
-        id: 2,
-        name: '2번 테이블',
-        done: false,
-        orderTime: '2025-05-28T14:32:00Z',
-        orders: [
-            { name: '알리오 올리오', qty: 2, checked: false, orderDetailId: 201 },
-            { name: '소주', qty: 1, checked: false, orderDetailId: 202 },
-        ],
-    },
-    {
-        id: 3,
-        name: '3번 테이블',
-        done: false,
-        orderTime: '2025-05-28T14:35:00Z',
-        orders: [
-            { name: '콘치즈', qty: 1, checked: false, orderDetailId: 301 },
-            { name: '콜라', qty: 9, checked: false, orderDetailId: 302 },
-        ],
-    },
-    {
-        id: 4,
-        name: '4번 테이블',
-        done: false,
-        orderTime: '2025-05-28T14:40:00Z',
-        orders: [
-            { name: '에그 인 헬', qty: 1, checked: false, orderDetailId: 401 },
-            { name: '맥주', qty: 2, checked: false, orderDetailId: 402 },
-        ],
-    },
-]);
+// ✅ 테이블 목록 (서빙용)
+const tables = ref([]);
 
+// ✅ 완료 처리 중 표시
 const isCompleting = ref(false);
 const completingTableId = ref(null);
 
-// 🎯 핵심 변경: 완료된 테이블만 숨김 (체크 상태와 무관)
+// ✅ 완료되지 않은 테이블만 필터링
 const visibleTables = computed(() => {
-    return tables.value.filter(table => !table.done);
+  return tables.value.filter(table => !table.done);
 });
 
-// 헬퍼 함수들
+// ✅ 체크 여부 헬퍼
 const isAllItemsChecked = (table) => {
-    return table.orders.every(item => item.checked);
+  return table.orders.every(item => item.checked);
 };
 
 const getCheckedCount = (table) => {
-    return table.orders.filter(item => item.checked).length;
+  return table.orders.filter(item => item.checked).length;
 };
 
 const getProgressPercentage = (table) => {
-    const total = table.orders.length;
-    const checked = getCheckedCount(table);
-    return total > 0 ? (checked / total) * 100 : 0;
+  const total = table.orders.length;
+  const checked = getCheckedCount(table);
+  return total > 0 ? (checked / total) * 100 : 0;
 };
 
 const formatTime = (timeString) => {
-    const date = new Date(timeString);
-    return date.toLocaleTimeString('ko-KR', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-    });
+  const date = new Date(timeString);
+  return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
 };
 
-// 🎯 주문 완료 처리 (API 호출 + 상태 업데이트)
-const handleCompleteOrder = async (table) => {
-    // 확인 다이얼로그
-    const confirmed = confirm(`${table.name} 주문을 완료 처리하시겠습니까?`);
-    if (!confirmed) return;
-    
-    isCompleting.value = true;
-    completingTableId.value = table.id;
-    
-    try {
-        // API 호출: 주문 전체 완료
-        const result = await handleApiCall(
-            () => servingApi.completeOrder(table.id),
-            '주문 완료 처리 중 오류가 발생했습니다.'
-        );
-        
-        if (result.success) {
-            // ✅ 성공: 테이블 상태 업데이트
-            table.done = true;
-            table.orders.forEach(item => {
-                item.checked = true;
-            });
-            
-            // 성공 피드백
-            alert(`${table.name} 주문이 완료되었습니다! 🎉`);
-            
-            // 2초 후 테이블 카드 제거 (부드러운 UX)
-            setTimeout(() => {
-                // done = true 인 테이블은 visibleTables에서 자동 제외됨
-            }, 2000);
-            
-        } else {
-            // ❌ 실패: 에러 메시지 표시
-            alert(`완료 처리 실패: ${result.error}`);
-        }
-        
-    } catch (error) {
-        console.error('주문 완료 처리 중 예외 발생:', error);
-        alert('처리 중 오류가 발생했습니다.');
-    } finally {
-        isCompleting.value = false;
-        completingTableId.value = null;
-    }
-};
+// ✅ 개별 메뉴 서빙 완료 처리
 const handlecheckChange = async (table, item) => {
-  console.log('handlecheckChange 호출됨:', table.name, item.name, item.checked);
-
-  try {
-    // 체크된 경우에만 API 호출 (필요시 조절 가능)
-    if (item.checked) {
-      const response = await completeItem(item.orderDetailId);
-      if (response.success) {
-        console.log('아이템 완료 처리 성공:', item.name);
-      } else {
-        console.error('아이템 완료 처리 실패:', response.message);
-        // 실패 시 체크 해제하거나 안내해도 됨
-        item.checked = false;
-        alert('아이템 완료 처리에 실패했습니다.');
-      }
-    } else {
-      // 체크 해제 시 API 호출이 필요하면 여기에 처리
+  if (item.checked) {
+    try {
+      await completeMenuServing(item.orderDetailId);
+      console.log(`${item.name} 서빙 완료`);
+    } catch (error) {
+      console.error('개별 완료 실패:', error);
+      item.checked = false;
+      alert('해당 항목 완료 처리 중 오류가 발생했습니다.');
     }
-  } catch (error) {
-    console.error('아이템 완료 처리 중 오류:', error);
-    alert('아이템 완료 처리 중 오류가 발생했습니다.');
-    // 실패 시 체크 상태 복구
-    item.checked = false;
   }
 };
-// 서빙 주문 목록 조회 (실제 API에서 데이터 가져오기)
-const fetchServingOrders = async () => {
-    try {
-        const result = await handleApiCall(
-            () => servingApi.getServingOrders(),
-            '서빙 주문 조회 중 오류가 발생했습니다.'
-        );
-        
-        if (result.success) {
-            // API 데이터를 현재 형태로 변환
-            tables.value = result.data.orders.map(order => ({
-                id: order.order_id,
-                name: `${order.table_id}번 테이블`,
-                done: false,
-                orderTime: order.time,
-                orders: order.items.map((item, index) => ({
-                    name: item.menu_name,
-                    qty: item.quantity,
-                    checked: false,
-                    orderDetailId: order.order_id * 100 + index, // 임시 ID
-                    option: item.option
-                }))
-            }));
-        }
-    } catch (error) {
-        console.error('서빙 주문 조회 실패:', error);
-        // 실패 시 가라데이터 사용 (현재 tables.value 유지)
-    }
+
+// ✅ 전체 주문 완료 처리
+const handleCompleteOrder = async (table) => {
+  const confirmed = confirm(`${table.name} 주문을 완료 처리하시겠습니까?`);
+  if (!confirmed) return;
+
+  isCompleting.value = true;
+  completingTableId.value = table.id;
+
+  try {
+    await completeOrderServing(table.id);
+    table.done = true;
+    table.orders.forEach(item => (item.checked = true));
+    alert(`${table.name} 주문이 완료되었습니다! 🎉`);
+  } catch (error) {
+    console.error('주문 완료 실패:', error);
+    alert('주문 완료 처리 중 오류가 발생했습니다.');
+  } finally {
+    isCompleting.value = false;
+    completingTableId.value = null;
+  }
 };
 
-// 컴포넌트 마운트 시 데이터 로드
+// ✅ 서버에서 서빙 항목 불러오기
+const fetchServingOrders = async () => {
+  try {
+    const data = await fetchServingList(); // API 함수 직접 사용
+    tables.value = data.map(order => ({
+      id: order.order_id,
+      name: `${order.table_id}번 테이블`,
+      done: false,
+      orderTime: order.time,
+      orders: order.items.map(item => ({
+        name: item.menu_name,
+        qty: item.quantity,
+        checked: false,
+        orderDetailId: item.order_detail_id
+      }))
+    }));
+  } catch (error) {
+    console.error('서빙 항목 조회 실패:', error);
+  }
+};
+
+// ✅ 마운트 시 자동 호출 + 주기적 새로고침
 onMounted(() => {
-    fetchServingOrders();
-    
-    // 30초마다 자동 새로고침 (선택사항)
-    setInterval(fetchServingOrders, 30000);
+  fetchServingOrders();
+  setInterval(fetchServingOrders, 30000); // 30초 간격 갱신
 });
 </script>
 
