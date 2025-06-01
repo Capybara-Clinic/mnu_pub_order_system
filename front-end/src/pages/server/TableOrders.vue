@@ -185,7 +185,7 @@ const fetchServingOrders = async () => {
 // ✅ 마운트 시 자동 호출 + 주기적 새로고침
 onMounted(() => {
   fetchServingOrders();
-  setInterval(fetchServingOrders, 30000); // 30초 간격 갱신
+  setInterval(fetchServingOrders, 300); // 3초 간격 갱신
 });
 </script>
 

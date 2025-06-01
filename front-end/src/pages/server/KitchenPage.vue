@@ -85,7 +85,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { 
-  fetchServingList, 
+  fetchKitchenOrders, 
   completeMenuServing, 
   completeOrderServing 
 } from '@/services/api.js';
@@ -164,7 +164,7 @@ const handleCompleteOrder = async (table) => {
 // TODO : back-end랑 상의해서 테이블 받아오는 것 형식 바꾸기
 const fetchServingOrders = async () => {
   try {
-    const data = await fetchServingList(); // API 함수 직접 사용
+    const data = await fetchKitchenOrders(); // API 함수 직접 사용
     tables.value = data.map(order => ({
       id: order.order_id,
       name: `${order.items[0].table_id}번 테이블`,
@@ -185,7 +185,7 @@ const fetchServingOrders = async () => {
 // ✅ 마운트 시 자동 호출 + 주기적 새로고침
 onMounted(() => {
   fetchServingOrders();
-  setInterval(fetchServingOrders, 30000); // 30초 간격 갱신
+  setInterval(fetchServingOrders, 300); // 3초 간격 갱신
 });
 </script>
 
