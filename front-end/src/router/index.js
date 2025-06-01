@@ -9,6 +9,7 @@ import OrderManagementView from '@/pages/cashier/OrderManagementView.vue';
 import OrderEditView from '@/pages/cashier/OrderEditView.vue';
 import InventoryManagement from '@/pages/cashier/InventoryManagementView.vue';
 import TableOrders from '@/pages/server/TableOrders.vue';
+import KitchenPage from '@/pages/server/KitchenPage';
 
 // API 연동 테스트용 axios 설정
 import axios from 'axios';
@@ -96,6 +97,13 @@ const routes = [
     path: '/server',
     name: 'TableOrders', 
     component: TableOrders
+  },
+
+  // 서버 페이지
+  {
+    path: '/kitchen',
+    name: 'KitchenPage', 
+    component: KitchenPage
   },
 
   // 404 페이지 (옵셔널)
