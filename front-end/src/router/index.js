@@ -26,9 +26,11 @@ const routes = [
     component: OrderHistoryPage,
   },
   {
-    path: '/',
-    redirect: '/order/1',
-  },
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: () => import('@/pages/NotFoundPage.vue')
+  }
+  
 ];
 
 const router = createRouter({
