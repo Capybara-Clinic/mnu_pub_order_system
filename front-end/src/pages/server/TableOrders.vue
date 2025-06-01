@@ -118,6 +118,7 @@ const getProgressPercentage = (table) => {
 };
 
 const formatTime = (timeString) => {
+  // console.log(timeString);
   const date = new Date(timeString);
   return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
 };
@@ -138,8 +139,9 @@ const handlecheckChange = async (table, item) => {
 
 // ✅ 전체 주문 완료 처리
 const handleCompleteOrder = async (table) => {
-  const confirmed = confirm(`${table.name} 주문을 완료 처리하시겠습니까?`);
-  if (!confirmed) return;
+  // 서빙 속도를 위한 주문 메시지 주석 처리
+  // const confirmed = confirm(`${table.name} 주문을 완료 처리하시겠습니까?`);
+  // if (!confirmed) return;
 
   isCompleting.value = true;
   completingTableId.value = table.id;
@@ -148,7 +150,7 @@ const handleCompleteOrder = async (table) => {
     await completeOrderServing(table.id);
     table.done = true;
     table.orders.forEach(item => (item.checked = true));
-    alert(`${table.name} 주문이 완료되었습니다! 🎉`);
+    // alert(`${table.name} 주문이 완료되었습니다! 🎉`);
   } catch (error) {
     console.error('주문 완료 실패:', error);
     alert('주문 완료 처리 중 오류가 발생했습니다.');
@@ -159,14 +161,15 @@ const handleCompleteOrder = async (table) => {
 };
 
 // ✅ 서버에서 서빙 항목 불러오기
+// TODO : back-end랑 상의해서 테이블 받아오는 것 형식 바꾸기
 const fetchServingOrders = async () => {
   try {
     const data = await fetchServingList(); // API 함수 직접 사용
     tables.value = data.map(order => ({
       id: order.order_id,
-      name: `${order.table_id}번 테이블`,
+      name: `${order.items[0].table_id}번 테이블`,
       done: false,
-      orderTime: order.time,
+      orderTime: order.order_time,
       orders: order.items.map(item => ({
         name: item.menu_name,
         qty: item.quantity,
