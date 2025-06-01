@@ -57,7 +57,7 @@
           <!-- 주문 헤더 -->
           <div class="flex justify-between items-center mb-3 pb-3 border-b border-gray-100">
             <div>
-              <span class="text-sm font-medium text-gray-900">주문번호 #{{ order.order_id }}, {{ idx }} 번째 주문</span>
+              <span class="text-sm font-medium text-gray-900">주문번호 #{{ order.order_id }}, {{ idx + 1 }} 번째 주문</span>
               <div class="text-xs text-gray-500 mt-1">{{ formatDate(order.created_at) }}</div>
             </div>
             <span 
