@@ -113,9 +113,13 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { fetchOrderById } from '@/services/api'; // ← 변경된 함수 임포트
+import { useOrderStore } from '@/store/order';
 
 const route = useRoute();
 const router = useRouter();
+
+const order = useOrderStore();
+const tableId = order.tableId;
 
 const orderId = route.params.orderId;
 console.log(orderId)
@@ -156,12 +160,10 @@ const formatCurrentTime = () => {
 };
 
 const goHome = () => {
-  const tableId = orderInfo.value.table_id || 1;
   router.push(`/order/${tableId}`);
 };
 
 const viewOrderHistory = () => {
-  const tableId = orderInfo.value.table_id || 1;
   router.push(`/history/${tableId}`);
 };
 </script>
