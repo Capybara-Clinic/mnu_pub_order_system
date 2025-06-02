@@ -19,8 +19,6 @@
         <h2 class="text-xl font-bold text-orange-600 mb-2">아래 계좌로 송금해주시기 바랍니다.</h2>
         <p class="text-sm text-gray-600">
           <b>아래 송금 계좌로 주문해주셔야 요리가 시작됩니다.</b>
-          <br>
-          앞접시/숟가락/젓가락은 셀프입니다.😎
         </p>
       </div>
 

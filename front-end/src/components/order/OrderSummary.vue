@@ -56,7 +56,7 @@
           class="flex items-center gap-2 text-gray-700"
         >
           <div class="text-sm font-medium">
-            <b>클릭해서 장바구니를 열 수 있어요!</b>
+            <b>여길 눌러 장바구니 오픈</b>
           </div>
           <span class="text-sm font-medium">총 {{ totalQuantity }}개</span>
           <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': isExpanded }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -89,7 +89,7 @@
           class="flex-1 py-3 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition-colors"
           @click="viewOrderHistory"
         >
-          주문 내역 확인하기
+          주문 내역
         </button>
         <button
           v-if="order.items.length > 0"
@@ -171,6 +171,9 @@ const router = useRouter();
 
 const viewOrderHistory = () => {
   const tableId = order.table_id || 1;
+  console.log('fiucking stup8di');
+  console.log(order);
+  console.log(order.table_id);
   router.push(`/history/${tableId}`);
 };
 
