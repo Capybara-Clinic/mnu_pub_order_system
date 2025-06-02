@@ -138,6 +138,15 @@ export const getStockSSEUrl = (tableId) => {
   return `${BASE_URL}/menu/sse/${tableId}`;
 };
 
+// 서버
+export const getKitchenSSEUrl = () => {
+  return `${BASE_URL}/kitchen/sse/`;
+};
+
+export const getServingSSEUrl = () => {
+  return `${BASE_URL}/serving/sse/`;
+};
+
 // ✅ 수동 재고 조회
 export const fetchMenuStocks = (tableId) => {
   return jsonFetch(`${BASE_URL}/menu/${tableId}`);

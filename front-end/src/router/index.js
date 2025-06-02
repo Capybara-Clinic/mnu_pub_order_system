@@ -40,43 +40,6 @@ const routes = [
     name: 'OrderHistoryPage',
     component: OrderHistoryPage,
   },
-
-  // Todo : 루트페이지 라우팅
-  // {
-  //   path: '/',
-  //   redirect: '/order/1',
-  // },
-  
-  // ✅ 수정된 부분 - component 속성 추가
-  {
-    path: '/orders',
-    name: 'OrderManagement', 
-    component: OrderManagementView  // 이 부분이 빠져있었음
-  },
-
-  // 새 주문 추가 페이지 (테이블ID 옵셔널)
-  {
-    path: '/order/new/:tableId?',
-    name: 'NewOrder',
-    component: OrderEditView,  // 이 부분도 빠져있었음
-    props: true
-  },
-
-  // 기존 주문 수정 페이지
-  {
-    path: '/order/edit/:tableId/:orderId',
-    name: 'EditOrder', 
-    component: OrderEditView,  // 이 부분도 빠져있었음
-    props: true
-  },
-
-  {
-    path: '/inventory',
-    name: 'InventoryManagement',
-    component: InventoryManagement  // 이 부분도 빠져있었음
-  },
-
-  // 메인 대시보드 - 캐셔
   {
     path: '/',
     name: 'CashierDashboard',
@@ -102,7 +65,7 @@ const routes = [
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    redirect: '/'
+    component: () => import('@/pages/NotFoundPage.vue')
   }
 ];
 
