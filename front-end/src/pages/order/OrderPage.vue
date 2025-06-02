@@ -55,7 +55,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import MenuList from '@/components/order/MenuList.vue';
 import OrderSummary from '@/components/order/OrderSummary.vue';
 import { fetchMenuAndOrders, getStockSSEUrl } from '@/services/api';
@@ -65,10 +65,15 @@ import { useSSE } from '@/hooks/useSSE';
 const categories = ref([]);
 const searchQuery = ref('');
 const route = useRoute();
+const router = useRouter(); // 추가
 const orderStore = useOrderStore();
 const tableId = Number(route.params.tableId || 1);
 
 onMounted(async () => {
+  if (!(tableId > 0 && tableId < 13)) {
+    router.replace('/404'); // 또는 router.push('/') 같은 다른 경로
+    return;
+  }
   orderStore.setTableId(tableId);
   const data = await fetchMenuAndOrders(tableId);
   categories.value = data.categories;

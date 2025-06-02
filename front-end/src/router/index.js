@@ -4,11 +4,11 @@ import PaymentPage from '@/pages/order/PaymentPage.vue';
 import PaymentCompletePage from '@/pages/order/PaymentCompletePage.vue';
 import OrderHistoryPage from '@/pages/order/OrderHistoryPage.vue';
 // import CashierDashboard from '@/pages/cashier/CashierDashboard.vue';
-import TableDetailView from '@/pages/cashier/TableDetailView.vue';
-import OrderManagementView from '@/pages/cashier/OrderManagementView.vue';
-import OrderEditView from '@/pages/cashier/OrderEditView.vue';
-import InventoryManagement from '@/pages/cashier/InventoryManagementView.vue';
-import TableOrders from '@/pages/server/TableOrders.vue';
+// import TableDetailView from '@/pages/cashier/TableDetailView.vue';
+// import OrderManagementView from '@/pages/cashier/OrderManagementView.vue';
+// import OrderEditView from '@/pages/cashier/OrderEditView.vue';
+// import InventoryManagement from '@/pages/cashier/InventoryManagementView.vue';
+// import TableOrders from '@/pages/server/TableOrders.vue';
 
 // API 연동 테스트용 axios 설정
 import axios from 'axios';
@@ -39,51 +39,6 @@ const routes = [
     path: '/history/:tableId',
     name: 'OrderHistoryPage',
     component: OrderHistoryPage,
-  },
-  
-  {
-    path: '/orders',
-    name: 'OrderManagement', 
-    component: OrderManagementView
-  },
-
-  // 새 주문 추가 페이지 (테이블ID 옵셔널)
-  {
-    path: '/order/new/:tableId?',
-    name: 'NewOrder',
-    component: OrderEditView,
-    props: true
-  },
-
-  // 기존 주문 수정 페이지
-  {
-    path: '/order/edit/:tableId/:orderId',
-    name: 'EditOrder', 
-    component: OrderEditView, 
-    props: true
-  },
-
-  {
-    path: '/inventory',
-    name: 'InventoryManagement',
-    component: InventoryManagement
-  },
-
-  // 메인 대시보드 - 캐셔
-
-  // 테이블 상세 페이지
-  {
-    path: '/table/:id',
-    name: 'TableDetail',
-    component: TableDetailView,
-    props: true // URL 파라미터를 props로 전달
-  },
-
-  // 서버 페이지
-  {
-    path: '/server',
-    name: 'TableOrders', 
-    component: TableOrders
   },
 
   // 404 페이지 (옵셔널)
