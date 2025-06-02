@@ -24,7 +24,9 @@ import { useOrderStore } from '@/store/order';
 
 const menus = defineProps(['menus']);
 const orderStore = useOrderStore();
-
+// console.log('[MenuList props check]', menus, Array.isArray(menus)); 
+// 대체 뭔데 뭐가 오염시킨건데 menus왜 안되는건데 정신나갈거같애
+console.log(menus);
 const onAdd = (menu) => {
   orderStore.addItem(menu);
 };
