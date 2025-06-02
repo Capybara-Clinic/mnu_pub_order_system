@@ -7,42 +7,17 @@ import CashierDashboard from '@/pages/cashier/CashierDashboard.vue';
 import TableDetailView from '@/pages/cashier/TableDetailView.vue';
 import OrderManagementView from '@/pages/cashier/OrderManagementView.vue';
 import OrderEditView from '@/pages/cashier/OrderEditView.vue';
-import InventoryManagement from '@/pages/cashier/InventoryManagementView.vue'
-
-// 전체 주문 관리 페이지
-// {
-//   path: '/orders',
-//   name: 'OrderManagement', 
-//   component: () => import('@/views/OrderManagementView.vue')
-// },
-
-// // 새 주문 추가 페이지 (테이블ID 옵셔널)
-// {
-//   path: '/order/new/:tableId?',
-//   name: 'NewOrder',
-//   component: () => import('@/views/OrderEditView.vue'),
-//   props: true
-// },
-
-// // 기존 주문 수정 페이지
-// {
-//   path: '/order/edit/:tableId/:orderId',
-//   name: 'EditOrder', 
-//   component: () => import('@/views/OrderEditView.vue'),
-//   props: true
-// },
-
-// {
-//   path: '/inventory',
-//   name: 'InventoryManagement',
-//   component: () => import('@/views/InventoryManagementView.vue')
-// },
-
-
-
-// TODO : directory refactoring
+import InventoryManagement from '@/pages/cashier/InventoryManagementView.vue';
 
 const routes = [
+  // 메인 대시보드 - 캐셔 (루트 경로)
+  {
+    path: '/',
+    name: 'CashierDashboard',
+    component: CashierDashboard
+  },
+  
+  // 주문 관련 라우트
   {
     path: '/order/:tableId',
     name: 'OrderPage',
@@ -64,60 +39,44 @@ const routes = [
     component: OrderHistoryPage,
   },
 
-  // Todo : 루트페이지 라우팅
-  // {
-  //   path: '/',
-  //   redirect: '/order/1',
-  // },
-  {
-    path: '/orders',
-    name: 'OrderManagement', 
-    OrderManagementView
-  },
-
-  // 새 주문 추가 페이지 (테이블ID 옵셔널)
-  {
-    path: '/order/new/:tableId?',
-    name: 'NewOrder',
-    OrderEditView
-  },
-
-  // 기존 주문 수정 페이지
-  {
-    path: '/order/edit/:tableId/:orderId',
-    name: 'EditOrder', 
-    OrderEditView
-  },
-
-  {
-    path: '/inventory',
-    name: 'InventoryManagement',
-    InventoryManagement
-  },
-
-  // 메인 대시보드 - 캐셔
-  {
-    path: '/',
-    name: 'CashierDashboard',
-    component: CashierDashboard
-  },
-  
-  // 테이블 상세 페이지
+  // 캐셔 관련 라우트
   {
     path: '/table/:id',
     name: 'TableDetail',
     component: TableDetailView,
-    props: true // URL 파라미터를 props로 전달
+    props: true
   },
-
-  // 404 페이지 (옵셔널)
   {
-    path: '/:pathMatch(.*)*',
-    name: 'NotFound',
-    redirect: '/'
+    path: '/orders',
+    name: 'OrderManagement', 
+    component: OrderManagementView  // component 추가!
   },
-  
+  {
+    path: '/order/new/:tableId?',
+    name: 'NewOrder',
+    component: OrderEditView,  // component 추가!
+    props: true
+  },
+  {
+    path: '/order/edit/:tableId/:orderId',
+    name: 'EditOrder', 
+    component: OrderEditView,  // component 추가!
+    props: true
+  },
+  {
+    path: '/inventory',
+    name: 'InventoryManagement',
+    component: InventoryManagement  // component 추가!
+  },
 
+  // 404 처리 - 맨 마지막에 위치해야 함
+  {
+    path: '/:pathMatch(.*)*',  // Vue 3 문법으로 수정
+    name: 'NotFound',
+    beforeEnter() {
+      window.location.href = '/404.html';  // window 추가
+    }
+  }
 ];
 
 const router = createRouter({
@@ -127,8 +86,8 @@ const router = createRouter({
 
 // 네비게이션 가드 (옵셔널 - 디버깅용)
 router.beforeEach((to, from, next) => {
-  console.log(`[Router] ${from.path} → ${to.path}`)
-  next()
+  console.log(`[Router] ${from.path} → ${to.path}`);
+  next();
 });
 
-export default router
+export default router;
