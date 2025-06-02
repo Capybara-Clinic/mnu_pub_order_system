@@ -26,6 +26,31 @@
       </div>
     </header>
 
+    <!-- 🧪 디버깅 섹션 -->
+    <div v-if="showDebugInfo" class="bg-yellow-100 border-2 border-yellow-300 p-4 mx-4 mt-4 rounded-lg">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="font-bold text-yellow-800">🧪 디버깅 정보</h3>
+        <button @click="showDebugInfo = false" class="text-yellow-600 hover:text-yellow-800">✕</button>
+      </div>
+      <div class="text-sm space-y-1">
+        <div><strong>마지막 조회:</strong> {{ lastFetchTime }}</div>
+        <div><strong>API 응답 주문 수:</strong> {{ debugInfo.apiOrderCount }}</div>
+        <div><strong>전체 목록 주문 수:</strong> {{ debugInfo.allOrdersCount }}</div>
+        <div><strong>누락된 주문:</strong> {{ debugInfo.missingOrders.length }}개</div>
+        <div v-if="debugInfo.missingOrders.length > 0" class="text-red-600">
+          누락: {{ debugInfo.missingOrders.map(o => `#${o.order_id}(${o.order_status})`).join(', ') }}
+        </div>
+      </div>
+      <div class="flex gap-2 mt-3">
+        <button @click="compareWithAllOrders" class="bg-blue-500 text-white px-3 py-1 rounded text-sm">
+          전체 목록과 비교
+        </button>
+        <button @click="debugTableAPI" class="bg-purple-500 text-white px-3 py-1 rounded text-sm">
+          API 직접 테스트
+        </button>
+      </div>
+    </div>
+
     <!-- 로딩 상태 -->
     <div v-if="loading" class="flex items-center justify-center min-h-screen">
       <div class="text-center">
@@ -49,6 +74,11 @@
       <!-- 빈 테이블인 경우 -->
       <div v-if="!tableData || tableData.orders.length === 0" class="text-center py-20">
         <div class="text-gray-500 text-lg mb-4">빈 테이블입니다</div>
+        <div class="text-xs text-gray-400 mb-4">
+          API 응답: {{ debugInfo.apiOrderCount }}개 주문 | 
+          실제 존재: {{ debugInfo.allOrdersCount }}개 주문
+          <button @click="showDebugInfo = true" class="ml-2 text-blue-500 underline">상세</button>
+        </div>
         <button 
           @click="goToNewOrder"
           class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
@@ -180,6 +210,16 @@
           아웃
         </button>
       </div>
+      
+      <!-- 디버깅 토글 버튼 -->
+      <div class="text-center mt-2">
+        <button 
+          @click="showDebugInfo = !showDebugInfo"
+          class="text-xs text-gray-500 hover:text-gray-700 underline"
+        >
+          {{ showDebugInfo ? '디버깅 숨기기' : '디버깅 정보 표시' }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -209,6 +249,15 @@ export default {
     // API 데이터
     const tableData = ref(null) // { table_id, orders: [...] }
     
+    // 디버깅 관련
+    const showDebugInfo = ref(false)
+    const lastFetchTime = ref('')
+    const debugInfo = ref({
+      apiOrderCount: 0,
+      allOrdersCount: 0,
+      missingOrders: []
+    })
+    
     // ===== Computed Properties =====
     const tableId = computed(() => parseInt(route.params.id))
     
@@ -231,19 +280,233 @@ export default {
       return validOrders.value.reduce((total, order) => total + order.total_amount, 0)
     })
     
+    // ===== 🧪 디버깅 Methods =====
+    
+    // 전체 주문 목록과 비교
+    const compareWithAllOrders = async () => {
+      try {
+        console.log('🔍 ======== 전체 주문 목록과 비교 시작 ========')
+        
+        // 1. 현재 테이블 API 응답
+        const currentTableOrders = tableData.value?.orders || []
+        console.log('📊 현재 테이블 API 응답:', currentTableOrders)
+        
+        // 2. 전체 주문 목록 조회
+        const allOrdersResponse = await cashierAPI.fetchAllOrders()
+        const allTableOrders = allOrdersResponse.orders.filter(o => o.table_id === tableId.value)
+        console.log('📊 전체 목록에서 해당 테이블 주문들:', allTableOrders)
+        
+        // 3. 비교 분석
+        const apiOrderIds = currentTableOrders.map(o => o.order_id)
+        const allOrderIds = allTableOrders.map(o => o.order_id)
+        
+        const missingInAPI = allTableOrders.filter(o => !apiOrderIds.includes(o.order_id))
+        const onlyInAPI = currentTableOrders.filter(o => !allOrderIds.includes(o.order_id))
+        
+        console.log('🔍 비교 결과:')
+        console.log(`  - 테이블 API 주문 수: ${currentTableOrders.length}`)
+        console.log(`  - 전체 목록 주문 수: ${allTableOrders.length}`)
+        console.log(`  - API에서 누락된 주문: ${missingInAPI.length}개`, missingInAPI)
+        console.log(`  - API에만 있는 주문: ${onlyInAPI.length}개`, onlyInAPI)
+        
+        // 4. 디버깅 정보 업데이트
+        debugInfo.value = {
+          apiOrderCount: currentTableOrders.length,
+          allOrdersCount: allTableOrders.length,
+          missingOrders: missingInAPI
+        }
+        
+        // 5. Alert로 요약 표시
+        const alertMsg = `📊 비교 결과:
+
+테이블 API: ${currentTableOrders.length}개 주문
+전체 목록: ${allTableOrders.length}개 주문
+누락된 주문: ${missingInAPI.length}개
+
+${missingInAPI.length > 0 ? 
+  '❌ 누락된 주문들:\n' + missingInAPI.map(o => `#${o.order_id} (${o.order_status}, ${o.order_time})`).join('\n') :
+  '✅ 모든 주문이 정상 조회됨'
+}
+
+자세한 로그는 브라우저 콘솔에서 확인하세요.`
+        
+        alert(alertMsg)
+        
+      } catch (error) {
+        console.error('❌ 비교 중 오류:', error)
+        alert(`❌ 비교 중 오류: ${error.message}`)
+      }
+    }
+    
+    // API 직접 테스트
+    const debugTableAPI = async () => {
+      try {
+        console.log('🧪 ======== 테이블 API 직접 테스트 ========')
+        
+        // 1. 직접 fetch로 API 호출
+        const url = `${process.env.VUE_APP_API_BASE_URL}/cashier/table/${tableId.value}`
+        console.log('📡 API URL:', url)
+        
+        const response = await fetch(url)
+        console.log('📡 Response Status:', response.status, response.statusText)
+        
+        const data = await response.json()
+        console.log('📡 Response Data:', data)
+        
+        // 2. cashierAPI로 호출과 비교
+        const apiResponse = await cashierAPI.fetchTableOrders(tableId.value)
+        console.log('📡 CashierAPI Response:', apiResponse)
+        
+        // 3. 결과 비교
+        const directOrders = data.orders || []
+        const apiOrders = apiResponse.orders || []
+        
+        console.log('🔍 비교:')
+        console.log(`  - 직접 fetch: ${directOrders.length}개`)
+        console.log(`  - cashierAPI: ${apiOrders.length}개`)
+        
+        const alertMsg = `🧪 API 테스트 결과:
+
+URL: ${url}
+상태: ${response.status} ${response.statusText}
+직접 fetch: ${directOrders.length}개 주문
+cashierAPI: ${apiOrders.length}개 주문
+
+${directOrders.length === apiOrders.length ? '✅ 일치' : '❌ 불일치'}
+
+자세한 로그는 브라우저 콘솔에서 확인하세요.`
+        
+        alert(alertMsg)
+        
+      } catch (error) {
+        console.error('❌ API 테스트 중 오류:', error)
+        alert(`❌ API 테스트 중 오류: ${error.message}`)
+      }
+    }
+    
     // ===== API Methods =====
     
-    // 테이블 주문 데이터 조회
+    // 테이블 주문 데이터 조회 (서버 응답 완전 디버깅)
     const fetchTableData = async () => {
       try {
         loading.value = true
         error.value = ''
         loadingMessage.value = `테이블 ${tableId.value} 주문 정보 조회 중...`
         
-        const response = await cashierAPI.fetchTableOrders(tableId.value)
-        tableData.value = response
+        console.log('🔍 ======== fetchTableData 시작 ========')
+        console.log(`🎯 테이블 ID: ${tableId.value}`)
         
-        console.log('✅ 테이블 주문 정보 조회 성공:', response)
+        // API 호출 전 시간 기록
+        const startTime = new Date()
+        console.log('📅 API 호출 시작:', startTime.toLocaleString())
+        
+        // ===== 🔍 서버 응답 완전 분석 =====
+        
+        // 1. 직접 fetch로 원본 응답 확인
+        const apiUrl = `${process.env.VUE_APP_API_BASE_URL}/cashier/table/${tableId.value}`
+        console.log('🌐 API URL:', apiUrl)
+        
+        console.log('📡 [1단계] 직접 fetch 호출...')
+        const rawResponse = await fetch(apiUrl)
+        console.log('📊 HTTP 상태:', rawResponse.status, rawResponse.statusText)
+        console.log('📋 응답 헤더:', Object.fromEntries(rawResponse.headers.entries()))
+        
+        const rawText = await rawResponse.text()
+        console.log('📄 원본 응답 텍스트:')
+        console.log(rawText)
+        
+        let rawData = null
+        try {
+          rawData = JSON.parse(rawText)
+          console.log('✅ JSON 파싱 성공')
+        } catch (parseError) {
+          console.error('❌ JSON 파싱 실패:', parseError)
+          throw new Error('서버 응답을 파싱할 수 없습니다')
+        }
+        
+        console.log('🗂️ [직접 fetch] 파싱된 데이터:')
+        console.log(JSON.stringify(rawData, null, 2))
+        console.log(`📊 [직접 fetch] 주문 수: ${rawData.orders?.length || 0}개`)
+        
+        if (rawData.orders && rawData.orders.length > 0) {
+          console.log('📋 [직접 fetch] 주문 상세:')
+          console.table(rawData.orders.map(order => ({
+            주문ID: order.order_id,
+            상태: order.order_status,
+            입금자: order.depositor_name,
+            금액: order.total_amount,
+            시간: order.order_time,
+            메뉴수: order.details?.length || 0
+          })))
+        }
+        
+        // 2. cashierAPI로 호출해서 비교
+        console.log('📡 [2단계] cashierAPI 호출...')
+        const response = await cashierAPI.fetchTableOrders(tableId.value)
+        
+        console.log('🗂️ [cashierAPI] 응답 데이터:')
+        console.log(JSON.stringify(response, null, 2))
+        console.log(`📊 [cashierAPI] 주문 수: ${response.orders?.length || 0}개`)
+        
+        if (response.orders && response.orders.length > 0) {
+          console.log('📋 [cashierAPI] 주문 상세:')
+          console.table(response.orders.map(order => ({
+            주문ID: order.order_id,
+            상태: order.order_status,
+            입금자: order.depositor_name,
+            금액: order.total_amount,
+            시간: order.order_time,
+            메뉴수: order.details?.length || 0
+          })))
+        }
+        
+        // 3. 두 응답 비교
+        const rawOrderCount = rawData.orders?.length || 0
+        const apiOrderCount = response.orders?.length || 0
+        
+        console.log('🔍 [비교 결과]')
+        console.log(`  - 직접 fetch: ${rawOrderCount}개 주문`)
+        console.log(`  - cashierAPI: ${apiOrderCount}개 주문`)
+        console.log(`  - 일치 여부: ${rawOrderCount === apiOrderCount ? '✅ 일치' : '❌ 불일치'}`)
+        
+        if (rawOrderCount !== apiOrderCount) {
+          console.error('🚨 중요: 직접 fetch와 cashierAPI 응답이 다릅니다!')
+          console.error('이는 cashierAPI 또는 jsonFetch 함수에 문제가 있음을 의미합니다.')
+        }
+        
+        // 4. 주문 ID 상세 비교
+        if (rawData.orders && response.orders) {
+          const rawOrderIds = rawData.orders.map(o => o.order_id).sort()
+          const apiOrderIds = response.orders.map(o => o.order_id).sort()
+          
+          console.log('🆔 주문 ID 비교:')
+          console.log('  - 직접 fetch IDs:', rawOrderIds)
+          console.log('  - cashierAPI IDs:', apiOrderIds)
+          
+          const missingInAPI = rawOrderIds.filter(id => !apiOrderIds.includes(id))
+          const extraInAPI = apiOrderIds.filter(id => !rawOrderIds.includes(id))
+          
+          if (missingInAPI.length > 0) {
+            console.error('❌ cashierAPI에서 누락된 주문 IDs:', missingInAPI)
+          }
+          if (extraInAPI.length > 0) {
+            console.warn('⚠️ cashierAPI에만 있는 주문 IDs:', extraInAPI)
+          }
+        }
+        
+        // 5. Vue 컴포넌트에 데이터 설정
+        tableData.value = response
+        lastFetchTime.value = new Date().toLocaleString()
+        
+        // 기본 디버깅 정보 설정
+        debugInfo.value = {
+          apiOrderCount: response.orders?.length || 0,
+          allOrdersCount: 0, // 비교 시 업데이트
+          missingOrders: []
+        }
+        
+        console.log('✅ 테이블 주문 정보 조회 성공')
+        console.log('🔍 ======== fetchTableData 종료 ========')
         
         // 페이지 제목 업데이트
         document.title = `테이블 ${tableId.value}번 - 레스토랑 관리`
@@ -251,6 +514,7 @@ export default {
       } catch (err) {
         error.value = '테이블 정보를 불러오는데 실패했습니다: ' + err.message
         console.error('❌ 테이블 조회 실패:', err)
+        console.error('❌ 오류 스택:', err.stack)
       } finally {
         loading.value = false
       }
@@ -263,10 +527,12 @@ export default {
     }
     
     const goToNewOrder = () => {
+      console.log(`🆕 새 주문 페이지로 이동: 테이블 ${tableId.value}`)
       router.push(`/order/new/${tableId.value}`)
     }
     
     const goToOrderEdit = (orderId) => {
+      console.log(`✏️ 주문 수정 페이지로 이동: 주문 #${orderId}`)
       router.push(`/order/edit/${tableId.value}/${orderId}`)
     }
     
@@ -392,7 +658,7 @@ export default {
     
     // ===== Lifecycle =====
     onMounted(() => {
-      console.log(`테이블 ${tableId.value} 상세 페이지 로드됨`)
+      console.log(`🔧 테이블 ${tableId.value} 상세 페이지 마운트됨`)
       fetchTableData()
     })
     
@@ -404,6 +670,9 @@ export default {
       loadingMessage,
       actionLoading,
       tableData,
+      showDebugInfo,
+      lastFetchTime,
+      debugInfo,
       
       // Computed
       tableId,
@@ -422,7 +691,9 @@ export default {
       getOrderHeaderClass,
       confirmPayment,
       cancelOrder,
-      clearTable
+      clearTable,
+      compareWithAllOrders,
+      debugTableAPI
     }
   }
 }
@@ -430,7 +701,7 @@ export default {
 
 <style scoped>
 .table-detail {
-  padding-bottom: 100px; /* 하단 고정 버튼 공간 확보 */
+  padding-bottom: 120px; /* 하단 고정 버튼 공간 확보 */
 }
 
 /* 그리드 아이템 호버 효과 */
