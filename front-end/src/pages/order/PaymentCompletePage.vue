@@ -3,7 +3,7 @@
     <!-- 헤더 -->
     <div class="bg-white shadow-sm border-b sticky top-0 z-10">
       <div class="px-4 py-3">
-        <h1 class="text-lg font-semibold text-center text-gray-900">결제완료확인</h1>
+        <h1 class="text-lg font-semibold text-center text-gray-900">주문 완료 확인</h1>
       </div>
     </div>
 
@@ -16,8 +16,12 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
           </svg>
         </div>
-        <h2 class="text-xl font-bold text-orange-600 mb-2">주문이<br>완료되었습니다</h2>
-        <p class="text-sm text-gray-600">결제가 성공적으로 처리되었습니다</p>
+        <h2 class="text-xl font-bold text-orange-600 mb-2">아래 계좌로 송금해주시기 바랍니다.</h2>
+        <p class="text-sm text-gray-600">
+          <b>아래 송금 계좌로 주문해주셔야 요리가 시작됩니다.</b>
+          <br>
+          앞접시/숟가락/젓가락은 셀프입니다.😎
+        </p>
       </div>
 
       <!-- 주문 정보 -->
@@ -40,7 +44,7 @@
           <div class="flex justify-between py-2 border-t border-gray-100">
             <span class="text-sm text-gray-600">송금계좌</span>
             <div class="text-right">
-              <div class="text-sm font-medium text-gray-900">차무식</div>
+              <div class="text-sm font-medium text-gray-900">정O태</div>
               <div class="text-xs text-gray-500">농협 101-1001-1000010-01</div>
             </div>
           </div>
@@ -81,8 +85,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
           <div class="text-sm text-blue-800 leading-relaxed">
-            주문이 주방에 전달되었습니다.<br>
-            gpt가 맛있게 요리해드리겠습니다😎<br>
+            송금을 완료해주세요😎<br>
             조리 시간은 약 15-20분 소요됩니다.
           </div>
         </div>
