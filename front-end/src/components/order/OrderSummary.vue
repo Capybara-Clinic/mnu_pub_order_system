@@ -126,8 +126,10 @@
 import { ref, computed } from 'vue';
 import { useOrderStore } from '@/store/order';
 // import { submitOrder } from '@/services/api';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 
+const route = useRoute();
+const tableId = Number(route.params.tableId);
 
 const order = useOrderStore();
 const isExpanded = ref(false);
@@ -170,10 +172,6 @@ const formatPhoneNumber = (e) => {
 const router = useRouter();
 
 const viewOrderHistory = () => {
-  const tableId = order.table_id || 1;
-  console.log('fiucking stup8di');
-  console.log(order);
-  console.log(order.table_id);
   router.push(`/history/${tableId}`);
 };
 
