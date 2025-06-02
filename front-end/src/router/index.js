@@ -3,7 +3,7 @@ import OrderPage from '@/pages/order/OrderPage.vue';
 import PaymentPage from '@/pages/order/PaymentPage.vue';
 import PaymentCompletePage from '@/pages/order/PaymentCompletePage.vue';
 import OrderHistoryPage from '@/pages/order/OrderHistoryPage.vue';
-import CashierDashboard from '@/pages/cashier/CashierDashboard.vue';
+// import CashierDashboard from '@/pages/cashier/CashierDashboard.vue';
 import TableDetailView from '@/pages/cashier/TableDetailView.vue';
 import OrderManagementView from '@/pages/cashier/OrderManagementView.vue';
 import OrderEditView from '@/pages/cashier/OrderEditView.vue';
@@ -39,11 +39,6 @@ const routes = [
     path: '/history/:tableId',
     name: 'OrderHistoryPage',
     component: OrderHistoryPage,
-  },
-  {
-    path: '/',
-    name: 'CashierDashboard',
-    component: CashierDashboard
   },
   
   {
