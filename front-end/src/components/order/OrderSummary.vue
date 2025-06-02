@@ -86,6 +86,12 @@
       <!-- 주문 버튼 -->
       <div class="flex gap-2">
         <button
+          class="flex-1 py-3 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition-colors"
+          @click="viewOrderHistory"
+        >
+          주문 내역 확인하기
+        </button>
+        <button
           v-if="order.items.length > 0"
           @click="clearOrder"
           class="flex-1 py-3 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition-colors"
@@ -97,7 +103,7 @@
           :class="[
             order.items.length > 0 
               ? 'flex-1 bg-orange-500 text-white hover:bg-orange-600' 
-              : 'w-full bg-gray-200 text-gray-500 cursor-not-allowed'
+              : 'flex-1 bg-gray-200 text-gray-500 cursor-not-allowed'
           ]"
           :disabled="order.items.length === 0"
           @click="submit"
@@ -163,6 +169,11 @@ const formatPhoneNumber = (e) => {
 };
 const router = useRouter();
 
+const viewOrderHistory = () => {
+  const tableId = order.table_id || 1;
+  router.push(`/history/${tableId}`);
+};
+
 const submit = async () => {
   if (order.items.length === 0) return;
   
@@ -186,7 +197,8 @@ const submit = async () => {
   //     option: '기본',
   //   }))
   // };
-  
+
+
   try {
     // const res = await submitOrder(payload);
     // alert(res.message);
