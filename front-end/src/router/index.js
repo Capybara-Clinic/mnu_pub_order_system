@@ -46,6 +46,36 @@ const routes = [
     component: CashierDashboard
   },
   
+  {
+    path: '/orders',
+    name: 'OrderManagement', 
+    component: OrderManagementView
+  },
+
+  // 새 주문 추가 페이지 (테이블ID 옵셔널)
+  {
+    path: '/order/new/:tableId?',
+    name: 'NewOrder',
+    component: OrderEditView,
+    props: true
+  },
+
+  // 기존 주문 수정 페이지
+  {
+    path: '/order/edit/:tableId/:orderId',
+    name: 'EditOrder', 
+    component: OrderEditView, 
+    props: true
+  },
+
+  {
+    path: '/inventory',
+    name: 'InventoryManagement',
+    component: InventoryManagement
+  },
+
+  // 메인 대시보드 - 캐셔
+
   // 테이블 상세 페이지
   {
     path: '/table/:id',
