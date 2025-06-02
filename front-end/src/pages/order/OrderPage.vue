@@ -85,7 +85,7 @@ const filteredMenus = (menus) => {
 };
 
 // SSE 반영 (선택 사항)
-useSSE(getStockSSEUrl(), (updated) => {
+useSSE(getStockSSEUrl(tableId), (updated) => {
   for (const category of categories.value) {
     const idx = category.menus.findIndex(m => m.menu_id === updated.menu_id);
     if (idx !== -1) {

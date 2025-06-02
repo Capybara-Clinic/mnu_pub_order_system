@@ -28,8 +28,8 @@ module.exports = {
     defineExpose: 'readonly',
     withDefaults: 'readonly'
   },
-  rules: {
-    'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
-    'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off'
-  }
+//   rules: {
+//     'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
+//     'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off'
+//   }
 }

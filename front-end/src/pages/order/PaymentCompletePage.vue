@@ -7,22 +7,6 @@
       </div>
     </div>
 
-    <!-- 검색 영역 -->
-    <div class="bg-white px-4 py-3 border-b">
-      <div class="flex gap-2">
-        <div class="flex-1 relative">
-          <input
-            type="text"
-            placeholder="부스 검 또는 로고"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-          />
-        </div>
-        <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors">
-          검색
-        </button>
-      </div>
-    </div>
-
     <!-- 메인 컨텐츠 -->
     <div class="flex-1 px-4 py-6">
       <!-- 완료 메시지 -->
@@ -54,10 +38,10 @@
           </div>
           
           <div class="flex justify-between py-2 border-t border-gray-100">
-            <span class="text-sm text-gray-600">결제계좌</span>
+            <span class="text-sm text-gray-600">송금계좌</span>
             <div class="text-right">
-              <div class="text-sm font-medium text-gray-900">홍길동</div>
-              <div class="text-xs text-gray-500">000-0000-0000</div>
+              <div class="text-sm font-medium text-gray-900">차무식</div>
+              <div class="text-xs text-gray-500">농협 101-1001-1000010-01</div>
             </div>
           </div>
           
@@ -97,8 +81,8 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
           <div class="text-sm text-blue-800 leading-relaxed">
-            주문이 매장에 전달되었습니다.<br>
-            음식 준비가 완료되면 전화로 안내드리겠습니다.<br>
+            주문이 주방에 전달되었습니다.<br>
+            gpt가 맛있게 요리해드리겠습니다😎<br>
             조리 시간은 약 15-20분 소요됩니다.
           </div>
         </div>
@@ -127,32 +111,29 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { fetchOrderHistoryByTable } from '@/services/api';
+import { fetchOrderById } from '@/services/api'; // ← 변경된 함수 임포트
 
 const route = useRoute();
 const router = useRouter();
+
 const orderId = route.params.orderId;
+console.log(orderId)
 const orderInfo = ref({});
 
 onMounted(async () => {
   try {
-    // 실제로는 orderId로 특정 주문을 조회해야 하지만, 
-    // 현재 API가 테이블별 조회만 지원하므로 임시로 구현
-    const tableId = 1; // 실제로는 route나 store에서 가져와야 함
-    const res = await fetchOrderHistoryByTable(tableId);
-    
-    // 해당 주문 ID와 일치하는 주문 찾기
-    const foundOrder = res.orders?.find(order => order.order_id == orderId);
-    if (foundOrder) {
-      orderInfo.value = foundOrder;
-    } else {
-      // 주문을 찾을 수 없는 경우 기본값 설정
-      orderInfo.value = {
-        order_id: orderId,
-        total_amount: 0,
-        items: []
-      };
-    }
+    const res = await fetchOrderById(orderId);
+    orderInfo.value = {
+      order_id: res.order_id,
+      depositor_name: res.depositor_name,
+      total_amount: res.total_amount,
+      items: res.items.map(item => ({
+        menu_name: item.menu_name,
+        quantity: item.quantity,
+        price: item.subtotal / item.quantity, // 개당 가격 추정
+        option: '기본' // 옵션이 없으므로 기본값 처리
+      }))
+    };
   } catch (error) {
     console.error('주문 정보 조회 실패:', error);
     orderInfo.value = {
@@ -180,6 +161,6 @@ const goHome = () => {
 
 const viewOrderHistory = () => {
   const tableId = orderInfo.value.table_id || 1;
-  router.push(`/order-history/${tableId}`);
+  router.push(`/history/${tableId}`);
 };
 </script>

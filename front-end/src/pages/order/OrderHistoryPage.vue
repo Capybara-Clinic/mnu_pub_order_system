@@ -57,7 +57,7 @@
           <!-- 주문 헤더 -->
           <div class="flex justify-between items-center mb-3 pb-3 border-b border-gray-100">
             <div>
-              <span class="text-sm font-medium text-gray-900">주문번호 #{{ order.order_id }}, {{ idx }} 번째 주문</span>
+              <span class="text-sm font-medium text-gray-900">주문번호 #{{ order.order_id }}, {{ idx + 1 }} 번째 주문</span>
               <div class="text-xs text-gray-500 mt-1">{{ formatDate(order.created_at) }}</div>
             </div>
             <span 
@@ -112,7 +112,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { fetchOrderHistoryByTable } from '@/services/api';
+import { fetchTableOrders } from '@/services/api';
 
 const route = useRoute();
 const router = useRouter();
@@ -123,16 +123,16 @@ const searchQuery = ref('');
 // 검색 필터링
 const filteredOrders = computed(() => {
   if (!searchQuery.value.trim()) return orders.value;
-  
+
   const query = searchQuery.value.toLowerCase();
   return orders.value.filter(order => 
     order.order_id.toString().includes(query) ||
-    order.items.some(item => item.menu_name.toLowerCase().includes(query))
+    (order.items || []).some(item => item.menu_name?.toLowerCase().includes(query))
   );
 });
 
 onMounted(async () => {
-  const res = await fetchOrderHistoryByTable(tableId);
+  const res = await fetchTableOrders(tableId);
   orders.value = res.orders || [];
 });
 

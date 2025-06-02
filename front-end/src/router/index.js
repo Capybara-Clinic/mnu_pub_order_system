@@ -3,11 +3,12 @@ import OrderPage from '@/pages/order/OrderPage.vue';
 import PaymentPage from '@/pages/order/PaymentPage.vue';
 import PaymentCompletePage from '@/pages/order/PaymentCompletePage.vue';
 import OrderHistoryPage from '@/pages/order/OrderHistoryPage.vue';
-import CashierDashboard from '@/pages/cashier/CashierDashboard.vue';
+import CashierDashboard from '@/pages/cashier/CashierDashboard.vue'; // 주석 해제!
 import TableDetailView from '@/pages/cashier/TableDetailView.vue';
 import OrderManagementView from '@/pages/cashier/OrderManagementView.vue';
 import OrderEditView from '@/pages/cashier/OrderEditView.vue';
 import InventoryManagement from '@/pages/cashier/InventoryManagementView.vue';
+import TableOrders from '@/pages/server/TableOrders.vue';
 
 const routes = [
   // 메인 대시보드 - 캐셔 (루트 경로)
@@ -49,32 +50,39 @@ const routes = [
   {
     path: '/orders',
     name: 'OrderManagement', 
-    component: OrderManagementView  // component 추가!
+    component: OrderManagementView
   },
   {
     path: '/order/new/:tableId?',
     name: 'NewOrder',
-    component: OrderEditView,  // component 추가!
+    component: OrderEditView,
     props: true
   },
   {
     path: '/order/edit/:tableId/:orderId',
     name: 'EditOrder', 
-    component: OrderEditView,  // component 추가!
+    component: OrderEditView,
     props: true
   },
   {
     path: '/inventory',
     name: 'InventoryManagement',
-    component: InventoryManagement  // component 추가!
+    component: InventoryManagement
   },
 
-  // 404 처리 - 맨 마지막에 위치해야 함
+  // 서버 관련 라우트
   {
-    path: '/:pathMatch(.*)*',  // Vue 3 문법으로 수정
+    path: '/server',
+    name: 'TableOrders', 
+    component: TableOrders
+  },
+
+  // 404 처리 - 맨 마지막에 위치
+  {
+    path: '/:pathMatch(.*)*',
     name: 'NotFound',
     beforeEnter() {
-      window.location.href = '/404.html';  // window 추가
+      window.location.href = '/404.html';
     }
   }
 ];
@@ -84,7 +92,7 @@ const router = createRouter({
   routes,
 });
 
-// 네비게이션 가드 (옵셔널 - 디버깅용)
+// 네비게이션 가드 (디버깅용)
 router.beforeEach((to, from, next) => {
   console.log(`[Router] ${from.path} → ${to.path}`);
   next();
