@@ -42,8 +42,8 @@
           <div class="flex justify-between py-2 border-t border-gray-100">
             <span class="text-sm text-gray-600">송금계좌</span>
             <div class="text-right">
-              <div class="text-sm font-medium text-gray-900">정O태</div>
-              <div class="text-xs text-gray-500">농협 101-1001-1000010-01</div>
+              <div class="text-sm font-medium text-gray-900">{{ accountName }}</div>
+              <div class="text-xs text-gray-500">{{ accountNumber }}</div>
             </div>
           </div>
           
@@ -114,6 +114,9 @@ import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { fetchOrderById } from '@/services/api'; // ← 변경된 함수 임포트
 import { useOrderStore } from '@/store/order';
+
+const accountName = process.env.VUE_APP_ACCOUNT_NAME;
+const accountNumber = process.env.VUE_APP_ACCOUNT_NUMBER;
 
 const route = useRoute();
 const router = useRouter();
