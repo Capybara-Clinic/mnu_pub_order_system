@@ -40,6 +40,7 @@
         <div v-if="debugInfo.missingOrders.length > 0" class="text-red-600">
           누락: {{ debugInfo.missingOrders.map(o => `#${o.order_id}(${o.order_status})`).join(', ') }}
         </div>
+        <div><strong>정렬 순서:</strong> {{ sortedOrders.map(o => `#${o.order_id}`).join(' → ') }}</div>
       </div>
       <div class="flex gap-2 mt-3">
         <button @click="compareWithAllOrders" class="bg-blue-500 text-white px-3 py-1 rounded text-sm">
@@ -267,12 +268,26 @@ export default {
       return tableData.value.orders.filter(order => order.order_status !== '취소')
     })
     
-    // 시간순 정렬된 주문들 (최신순, 취소된 주문도 포함하여 표시)
+    // 시간순 정렬된 주문들 (최신순 - 가장 최근 주문이 상단에 표시)
     const sortedOrders = computed(() => {
       if (!tableData.value || !tableData.value.orders) return []
-      return [...tableData.value.orders].sort((a, b) => {
-        return new Date(b.order_time) - new Date(a.order_time)
+      
+      const sorted = [...tableData.value.orders].sort((a, b) => {
+        // order_time을 Date 객체로 변환
+        const timeA = new Date(a.order_time)
+        const timeB = new Date(b.order_time)
+        
+        // 디버깅 로그
+        console.log(`정렬 비교: 주문 #${a.order_id}(${timeA.toLocaleString()}) vs 주문 #${b.order_id}(${timeB.toLocaleString()})`)
+        
+        // 최신순 정렬: 더 최근 시간(큰 값)이 앞으로 (내림차순)
+        return timeB.getTime() - timeA.getTime()
       })
+      
+      // 정렬 결과 로그
+      console.log('🔄 정렬된 주문 순서 (최신순):', sorted.map(o => `#${o.order_id}(${new Date(o.order_time).toLocaleString()})`))
+      
+      return sorted
     })
     
     // 총 금액 (취소된 주문 제외)
