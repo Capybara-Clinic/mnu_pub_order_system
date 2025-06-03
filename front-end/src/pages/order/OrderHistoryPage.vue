@@ -131,6 +131,10 @@ const filteredOrders = computed(() => {
 });
 
 onMounted(async () => {
+  if (!(tableId > 0 && tableId < 13)) {
+    router.replace('/404'); // 또는 router.push('/') 같은 다른 경로
+    return;
+  }
   const res = await fetchTableOrders(tableId);
   orders.value = res.orders || [];
   const res2 = await fetchMenuAndOrders(tableId);
