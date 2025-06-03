@@ -50,14 +50,14 @@
       <!-- 주문 내역 카드들 -->
       <div v-else class="space-y-3">
         <div
-          v-for="(order, idx) in filteredOrders"
+          v-for="(order) in filteredOrders"
           :key="order.order_id"
           class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
         >
           <!-- 주문 헤더 -->
           <div class="flex justify-between items-center mb-3 pb-3 border-b border-gray-100">
             <div>
-              <span class="text-sm font-medium text-gray-900">주문번호 #{{ order.order_id }}, {{ idx + 1 }} 번째 주문</span>
+              <span class="text-sm font-medium text-gray-900">주문번호 #{{ order.order_id }}</span>
             </div>
             <span 
               class="px-2 py-1 text-xs font-medium rounded-full"
@@ -80,16 +80,16 @@
               </div>
               <div class="text-right">
                 <div class="text-sm font-medium text-gray-900">{{ item.quantity }}개</div>
-                <div class="text-xs text-gray-500">{{ (item.menu_account).toLocaleString() }}원</div>
+                <!-- <div class="text-xs text-gray-500">{{ (item.menu_account).toLocaleString() }}원</div> -->
               </div>
             </div>
           </div>
 
           <!-- 총액 -->
           <div class="flex justify-between items-center pt-3 border-t border-gray-100">
-            <span class="text-sm font-medium text-gray-700">총 결제금액</span>
+            <!-- <span class="text-sm font-medium text-gray-700">총 결제금액</span> -->
             <span class="text-base font-bold text-orange-600">
-              {{ order.total_amount?.toLocaleString() || calculateTotal(order.items) }}원
+              <!-- {{ order.total_amount?.toLocaleString() || calculateTotal(order.items) }}원 -->
             </span>
           </div>
         </div>
@@ -111,7 +111,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { fetchTableOrders, fetchMenuAndOrders } from '@/services/api';
+import { fetchMenuAndOrders } from '@/services/api';
 
 const route = useRoute();
 const router = useRouter();
@@ -135,10 +135,11 @@ onMounted(async () => {
     router.replace('/404'); // 또는 router.push('/') 같은 다른 경로
     return;
   }
-  const res = await fetchTableOrders(tableId);
-  orders.value = res.orders || [];
+  // const res = await fetchTableOrders(tableId);
+  // orders.value = res.orders || [];
   const res2 = await fetchMenuAndOrders(tableId);
-  console.log(res.orders);
+  orders.value = res2.active_orders || [];
+  // console.log(res.orders);
   console.log(res2.active_orders);
 });
 
@@ -146,9 +147,9 @@ const goHome = () => {
   router.push(`/order/${tableId}`);
 };
 
-const calculateTotal = (items) => {
-  return items.reduce((sum, item) => sum + (item.quantity * (item.price || 0)), 0);
-};
+// const calculateTotal = (items) => {
+//   return items.reduce((sum, item) => sum + (item.quantity * (item.price || 0)), 0);
+// };
 
 const getStatusClass = (status) => {
   switch (status) {
