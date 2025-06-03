@@ -61,9 +61,9 @@
             </div>
             <span 
               class="px-2 py-1 text-xs font-medium rounded-full"
-              :class="getStatusClass(order.order_status)"
+              :class="getStatusClass(order.status)"
             >
-              {{ order.order_status }}
+              {{ order.status }}
             </span>
           </div>
 
