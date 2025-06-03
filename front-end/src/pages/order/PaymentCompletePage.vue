@@ -160,10 +160,12 @@ const formatCurrentTime = () => {
 };
 
 const goHome = () => {
+  order.reset(); // 장바구니 초기화
   router.push(`/order/${tableId}`);
 };
 
 const viewOrderHistory = () => {
+  order.reset(); // 장바구니 초기화
   router.push(`/history/${tableId}`);
 };
 </script>
