@@ -52,6 +52,10 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+  scrollBehavior() {
+    // 항상 최상단으로 이동
+    return { top: 0 };
+  }
 });
 
 // 네비게이션 가드 (옵셔널 - 디버깅용)
