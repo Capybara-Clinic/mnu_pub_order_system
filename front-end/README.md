@@ -1,4 +1,4 @@
-# oing-vue-project
+# mnu pub order project
 
 ## Project setup
 ```
