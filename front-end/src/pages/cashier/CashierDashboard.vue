@@ -9,7 +9,7 @@
       <!-- 테이블 그리드 -->
       <section class="mb-8">
         <h2 class="text-xl font-bold text-gray-800 mb-6">🍽️ 테이블 현황</h2>
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-6">
+        <div class="grid grid-cols-5 sm:grid-cols-2 gap-6">
           <TableCard 
             v-for="table in tables" 
             :key="table.table_id"
