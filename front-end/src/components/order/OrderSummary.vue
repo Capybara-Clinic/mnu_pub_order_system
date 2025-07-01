@@ -56,7 +56,7 @@
           class="flex items-center gap-2 text-gray-700"
         >
           <div class="text-sm font-medium">
-            <b>클릭해서 장바구니를 열 수 있어요!</b>
+            <b>여길 눌러 장바구니 오픈</b>
           </div>
           <span class="text-sm font-medium">총 {{ totalQuantity }}개</span>
           <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': isExpanded }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -86,6 +86,12 @@
       <!-- 주문 버튼 -->
       <div class="flex gap-2">
         <button
+          class="flex-1 py-3 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition-colors"
+          @click="viewOrderHistory"
+        >
+          주문 내역
+        </button>
+        <button
           v-if="order.items.length > 0"
           @click="clearOrder"
           class="flex-1 py-3 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition-colors"
@@ -97,7 +103,7 @@
           :class="[
             order.items.length > 0 
               ? 'flex-1 bg-orange-500 text-white hover:bg-orange-600' 
-              : 'w-full bg-gray-200 text-gray-500 cursor-not-allowed'
+              : 'flex-1 bg-gray-200 text-gray-500 cursor-not-allowed'
           ]"
           :disabled="order.items.length === 0"
           @click="submit"
@@ -120,8 +126,10 @@
 import { ref, computed } from 'vue';
 import { useOrderStore } from '@/store/order';
 // import { submitOrder } from '@/services/api';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 
+const route = useRoute();
+const tableId = Number(route.params.tableId);
 
 const order = useOrderStore();
 const isExpanded = ref(false);
@@ -163,6 +171,10 @@ const formatPhoneNumber = (e) => {
 };
 const router = useRouter();
 
+const viewOrderHistory = () => {
+  router.push(`/history/${tableId}`);
+};
+
 const submit = async () => {
   if (order.items.length === 0) return;
   
@@ -186,7 +198,8 @@ const submit = async () => {
   //     option: '기본',
   //   }))
   // };
-  
+
+
   try {
     // const res = await submitOrder(payload);
     // alert(res.message);
